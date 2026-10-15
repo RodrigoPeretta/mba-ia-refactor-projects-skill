@@ -72,7 +72,11 @@ Não pare aqui: siga direto para a Fase 2.
 5. Verifique explicitamente a categoria **APIs deprecated** (AP-17). Se não houver nenhuma,
    o relatório precisa dizer isso e listar o que foi verificado.
 6. Monte o relatório no formato "Fase 2" do template: ordene CRITICAL → HIGH → MEDIUM → LOW
-   e confira que o Summary, a quantidade de findings e o Total batem.
+   e confira que o Summary, a quantidade de findings e o Total batem. Confira também a
+   coerência com a Fase 1: se houver finding AP-05 (God Class/Module), a arquitetura é
+   **Monolítica** — corrija a classificação no cabeçalho do relatório se a Fase 1 tiver
+   dito outra coisa. As recomendações seguem a "Recomendação padrão" de cada entrada do
+   catálogo, quando houver.
 7. Grave o relatório no caminho definido pelo argumento (padrão
    `.refactor-arch/audit-report.md`) e imprima-o.
 8. Termine com exatamente esta linha e **encerre a sua resposta** — não execute mais nada:

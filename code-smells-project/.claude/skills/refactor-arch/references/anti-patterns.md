@@ -117,6 +117,10 @@ Nunca desça um CRITICAL de segurança (AP-01 a AP-04, AP-06) abaixo de HIGH.
     corpo.
 - **Falsos positivos:** rotas protegidas por decorator/middleware de auth aplicado no
   blueprint/router.
+- **Recomendação padrão:** **manter a rota** e protegê-la com token de administrador
+  (fechada por padrão); para execução de SQL/comando, além do token, restringir a leitura
+  (`SELECT` único). Nunca recomende remover a rota — ela faz parte do contrato que a
+  Fase 3 precisa preservar.
 - **Fix:** RF-05
 
 ---

@@ -20,7 +20,7 @@ MVC/SOLID), **MEDIUM** (padronização, duplicação, performance moderada), **L
 
 ## Projeto 1 — code-smells-project (API de E-commerce, Python/Flask)
 
-Monolito em 4 arquivos (~660 linhas): `app.py` (rotas + endpoints admin), `controllers.py`
+Monolito em 4 arquivos (780 linhas): `app.py` (rotas + endpoints admin), `controllers.py`
 (validação + resposta HTTP), `models.py` (SQL cru + regra de negócio), `database.py`
 (conexão global + schema + seed). Domínio: produtos, usuários, pedidos, itens de pedido e
 relatório de vendas.

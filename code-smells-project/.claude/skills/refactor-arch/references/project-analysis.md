@@ -121,11 +121,21 @@ arquivos `.http`, coleções Postman/Insomnia ou README.
 Avalie as responsabilidades: **roteamento**, **orquestração da requisição** (controller),
 **regra de negócio**, **acesso a dados**, **configuração**, **tratamento de erro**.
 
-| Classificação | Critério objetivo |
-|---|---|
-| **Monolítica** | Não há pastas/módulos de camada, ou há módulos com nomes de camada mas ≥ 3 responsabilidades misturadas no mesmo arquivo/classe (ex.: um arquivo com SQL + regra + rotas; uma classe que cria o banco, registra rotas e chama integrações externas) |
-| **Parcialmente em camadas** | Existem pastas/módulos de camada (ex.: `models/`, `routes/`, `services/`, `utils/`) e o acesso a dados está separado das rotas, mas pelo menos uma camada do MVC alvo falta (controllers, config, error handling) ou concentra responsabilidade de outra (regra de negócio nas rotas) |
-| **Em camadas** | Todas as camadas do MVC alvo existem e cada uma cumpre só a sua responsabilidade |
+Uma **camada** é uma **pasta/pacote** com módulos separados por entidade ou recurso
+(ex.: `models/` com um arquivo por entidade). **Arquivos soltos com nome de camada**
+(`models.py`, `controllers.py`, `utils.js` na raiz) **não contam como camadas**: são módulos
+de um monolito.
+
+Aplique os critérios **nesta ordem** e pare no primeiro que se encaixar:
+
+| Ordem | Classificação | Critério objetivo |
+|:-:|---|---|
+| 1 | **Monolítica** | Não existem pastas de camada **ou** algum arquivo/classe concentra ≥ 3 responsabilidades (ex.: um arquivo com SQL + regra + rotas; um módulo "models" com funções de vários domínios que também decide regra e formata resposta; uma classe que cria o banco, registra rotas e chama integrações externas) |
+| 2 | **Parcialmente em camadas** | Existem pastas de camada (ex.: `models/`, `routes/`, `services/`, `utils/`), o acesso a dados está separado das rotas, mas pelo menos uma camada do MVC alvo falta (controllers, config, error handling) ou concentra responsabilidade de outra (regra de negócio nas rotas) |
+| 3 | **Em camadas** | Todas as camadas do MVC alvo existem como pastas e cada uma cumpre só a sua responsabilidade |
+
+A classificação decide o layout alvo da Fase 3, então ela precisa ser coerente com a
+auditoria: se a Fase 2 encontrar um God Class/Module (AP-05), o projeto é **Monolítico**.
 
 Na justificativa, cite as evidências (ex.: "3 arquivos; o módulo de dados mistura SQL,
 regras de dois domínios e formatação de resposta; sem config nem error handler"). Para projetos parcialmente em
