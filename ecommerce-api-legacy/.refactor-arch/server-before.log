@@ -1,0 +1,23 @@
+
+> desafio-arquitetura-ia-boilerplate@1.0.0 start
+> node src/app.js
+
+Frankenstein LMS rodando na porta 3000...
+Processando cartão 4111222233334444 na chave pk_live_1234567890abcdef
+[LOG] Salvando no cache: last_checkout_2
+Processando cartão 5111222233334444 na chave pk_live_1234567890abcdef
+Processando cartão 4000111122223333 na chave pk_live_1234567890abcdef
+[LOG] Salvando no cache: last_checkout_2
+Processando cartão 4111222233334444 na chave pk_live_1234567890abcdef
+[LOG] Salvando no cache: last_checkout_4
+Processando cartão 4111222233334444 na chave pk_live_1234567890abcdef
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\ecommerce-api-legacy\src\AppManager.js:46
+                        let status = cc.startsWith("4") ? "PAID" : "DENIED";
+                                        ^
+
+TypeError: cc.startsWith is not a function
+    at processPaymentAndEnroll (D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\ecommerce-api-legacy\src\AppManager.js:46:41)
+    at Statement.<anonymous> (D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\ecommerce-api-legacy\src\AppManager.js:71:29)
+    at Statement.replacement (D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\ecommerce-api-legacy\node_modules\sqlite3\lib\trace.js:25:27)
+
+Node.js v22.12.0

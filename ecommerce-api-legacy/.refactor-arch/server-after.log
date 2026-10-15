@@ -1,0 +1,9 @@
+
+> desafio-arquitetura-ia-boilerplate@1.0.0 start
+> node src/app.js
+
+[2026-10-15T17:14:26.811Z] WARN PAYMENT_GATEWAY_KEY não definida; gateway de pagamento em modo simulado sem credencial
+[2026-10-15T17:14:26.831Z] INFO Frankenstein LMS rodando na porta 3000...
+[2026-10-15T17:14:27.508Z] INFO Processando pagamento com cartão final 4444
+[2026-10-15T17:14:27.708Z] INFO Processando pagamento com cartão final 4444
+[2026-10-15T17:14:28.107Z] INFO Processando pagamento com cartão final 3333

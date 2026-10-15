@@ -132,7 +132,7 @@ relatório de vendas.
 
 ## Projeto 2 — ecommerce-api-legacy (LMS com checkout, Node.js/Express)
 
-Três arquivos (~150 linhas): `app.js` (bootstrap), `AppManager.js` (uma classe com banco,
+Três arquivos (180 linhas): `app.js` (bootstrap), `AppManager.js` (uma classe com banco,
 schema, seed, rotas e regras), `utils.js` (config + "cripto" + cache global). Domínio:
 usuários, cursos, matrículas, pagamentos e log de auditoria. Endpoints: `POST /api/checkout`,
 `GET /api/admin/financial-report`, `DELETE /api/users/:id`.
@@ -228,7 +228,7 @@ deprecated e tem vulnerabilidades publicadas — dependência a ser atualizada.
 
 ## Projeto 3 — task-manager-api (Task Manager, Python/Flask)
 
-Já tem camadas (`models/`, `routes/`, `services/`, `utils/`, ~980 linhas), com
+Já tem camadas (`models/`, `routes/`, `services/`, `utils/`), com
 Flask-SQLAlchemy. Domínio: tasks, usuários, categorias e relatórios. A organização é
 **aparente**: as rotas concentram a regra de negócio, e o que existe em `utils/` e nos
 models para evitar isso não é usado.
