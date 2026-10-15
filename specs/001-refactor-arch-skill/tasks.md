@@ -103,7 +103,7 @@ história.
 
 **Independent Test**: hashes iguais nas 3 cópias; cenários A e B passando nos projetos 2 e 3
 
-- [ ] T021 [US4] Copiar `SK/` para `ecommerce-api-legacy/.claude/skills/refactor-arch/` e `task-manager-api/.claude/skills/refactor-arch/` e conferir o hash das 3 cópias (quickstart, passo 1)
+- [x] T021 [US4] Copiar `SK/` para `ecommerce-api-legacy/.claude/skills/refactor-arch/` e `task-manager-api/.claude/skills/refactor-arch/` e conferir o hash das 3 cópias (quickstart, passo 1)
 - [ ] T022 [US4] Executar o cenário A no `ecommerce-api-legacy` (stack Node.js/Express detectada, domínio LMS com checkout, ≥ 5 findings, ≥ 1 CRITICAL/HIGH, linhas corretas, ≥ 5 dos achados P2-01…P2-14, deprecated reportado, `git status` só com `.refactor-arch/`)
 - [ ] T023 [US4] Executar o cenário B no `ecommerce-api-legacy` (`npm start` continua funcionando; checkout aprovado/recusado/inválido, relatório financeiro e exclusão de usuário sem `REGRESSION`; rotas protegidas listadas em Contract Changes); copiar o relatório para `reports/audit-project-2.md` e commitar `ecommerce-api-legacy/` e o relatório
 - [ ] T024 [US4] Executar o cenário A no `task-manager-api` (Python/Flask e domínio Task Manager detectados; arquitetura "parcialmente em camadas"; findings mesmo com camadas existentes; APIs deprecated `Query.get()`/`datetime.utcnow()` presentes; ≥ 5 dos achados P3-01…P3-14)
