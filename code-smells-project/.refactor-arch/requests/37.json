@@ -1,0 +1,1 @@
+{"sql": "SELECT id, nome FROM produtos WHERE id = 1"}
