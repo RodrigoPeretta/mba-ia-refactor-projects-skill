@@ -288,7 +288,7 @@ models para evitar isso não é usado.
   `task_routes.py:42, 51, 67, 117, 122, 158, 188, 195, 227`;
   `user_routes.py:29, 94, 136, 155`; `report_routes.py:105, 192, 213`
 - **`datetime.utcnow()`** (deprecated no Python 3.12+ → `datetime.now(timezone.utc)`):
-  `models/task.py:15-16, 52`, `models/user.py:14`, `models/category.py:14`,
+  `models/task.py:15-16, 52`, `models/user.py:14`, `models/category.py:11`,
   `task_routes.py:31, 72, 215, 285`, `user_routes.py:172`,
   `report_routes.py:35, 42, 45, 71, 133`, `notification_service.py:35`, `helpers.py:38`,
   `seed.py:66-74`

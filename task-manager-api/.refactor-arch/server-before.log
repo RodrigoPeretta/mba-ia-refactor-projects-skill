@@ -1,0 +1,158 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.157:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 903-347-997
+127.0.0.1 - - [15/Oct/2026 14:26:32] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:36] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:36] "GET /health HTTP/1.1" 200 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:31: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  if t.due_date < datetime.utcnow():
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:42: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(t.user_id)
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:51: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  cat = Category.query.get(t.category_id)
+127.0.0.1 - - [15/Oct/2026 14:26:37] "GET /tasks HTTP/1.1" 200 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:67: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  task = Task.query.get(task_id)
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:72: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  if task.due_date < datetime.utcnow():
+127.0.0.1 - - [15/Oct/2026 14:26:37] "GET /tasks/1 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:37] "GET /tasks/9999 HTTP/1.1" 404 -
+127.0.0.1 - - [15/Oct/2026 14:26:37] "GET /tasks/search?q=API HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:38] "GET /tasks/search?status=pending&priority=1 HTTP/1.1" 200 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:285: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  if t.due_date < datetime.utcnow():
+127.0.0.1 - - [15/Oct/2026 14:26:38] "GET /tasks/stats HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:38] "GET /users HTTP/1.1" 200 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\user_routes.py:29: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(user_id)
+127.0.0.1 - - [15/Oct/2026 14:26:38] "GET /users/1 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:38] "GET /users/9999 HTTP/1.1" 404 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\user_routes.py:155: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(user_id)
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\user_routes.py:172: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  if t.due_date < datetime.utcnow():
+127.0.0.1 - - [15/Oct/2026 14:26:39] "GET /users/1/tasks HTTP/1.1" 200 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\report_routes.py:35: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  if t.due_date < datetime.utcnow():
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\report_routes.py:42: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  'days_overdue': (datetime.utcnow() - t.due_date).days
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\report_routes.py:45: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  seven_days_ago = datetime.utcnow() - timedelta(days=7)
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\report_routes.py:71: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  'generated_at': str(datetime.utcnow()),
+127.0.0.1 - - [15/Oct/2026 14:26:39] "GET /reports/summary HTTP/1.1" 200 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\report_routes.py:105: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(user_id)
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\report_routes.py:133: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  if t.due_date < datetime.utcnow():
+127.0.0.1 - - [15/Oct/2026 14:26:39] "GET /reports/user/1 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:39] "GET /reports/user/9999 HTTP/1.1" 404 -
+127.0.0.1 - - [15/Oct/2026 14:26:39] "GET /categories HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:40] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:40] "POST /login HTTP/1.1" 401 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\sqlalchemy\sql\schema.py:4296: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore[call-arg, no-any-return, no-untyped-call]  # noqa: E501
+127.0.0.1 - - [15/Oct/2026 14:26:40] "POST /users HTTP/1.1" 201 -
+127.0.0.1 - - [15/Oct/2026 14:26:41] "POST /users HTTP/1.1" 400 -
+127.0.0.1 - - [15/Oct/2026 14:26:41] "POST /users HTTP/1.1" 409 -
+127.0.0.1 - - [15/Oct/2026 14:26:41] "POST /users HTTP/1.1" 201 -
+127.0.0.1 - - [15/Oct/2026 14:26:41] "POST /categories HTTP/1.1" 201 -
+127.0.0.1 - - [15/Oct/2026 14:26:42] "POST /categories HTTP/1.1" 400 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:117: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(user_id)
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:122: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  cat = Category.query.get(category_id)
+127.0.0.1 - - [15/Oct/2026 14:26:42] "POST /tasks HTTP/1.1" 201 -
+127.0.0.1 - - [15/Oct/2026 14:26:42] "POST /tasks HTTP/1.1" 400 -
+127.0.0.1 - - [15/Oct/2026 14:26:43] "POST /tasks HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 1478, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 1458, in wsgi_app
+    response = self.handle_exception(e)
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 1455, in wsgi_app
+    response = self.full_dispatch_request()
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 869, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py", line 113, in create_task
+    if priority < 1 or priority > 5:
+       ^^^^^^^^^^^^
+TypeError: '<' not supported between instances of 'str' and 'int'
+127.0.0.1 - - [15/Oct/2026 14:26:43] "POST /tasks HTTP/1.1" 404 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:158: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  task = Task.query.get(task_id)
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:215: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  task.updated_at = datetime.utcnow()
+127.0.0.1 - - [15/Oct/2026 14:26:43] "PUT /tasks/11 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:43] "PUT /tasks/11 HTTP/1.1" 400 -
+127.0.0.1 - - [15/Oct/2026 14:26:44] "PUT /tasks/9999 HTTP/1.1" 404 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\user_routes.py:94: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(user_id)
+127.0.0.1 - - [15/Oct/2026 14:26:44] "PUT /users/4 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:44] "PUT /users/4 HTTP/1.1" 400 -
+127.0.0.1 - - [15/Oct/2026 14:26:44] "PUT /users/4 HTTP/1.1" 200 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\report_routes.py:192: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  cat = Category.query.get(cat_id)
+127.0.0.1 - - [15/Oct/2026 14:26:45] "PUT /categories/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:45] "PUT /categories/9999 HTTP/1.1" 404 -
+127.0.0.1 - - [15/Oct/2026 14:26:45] "GET /tasks/11 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:45] "GET /users/4/tasks HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:46] "GET /tasks/search?priority=abc HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 1478, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 1458, in wsgi_app
+    response = self.handle_exception(e)
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 1455, in wsgi_app
+    response = self.full_dispatch_request()
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 869, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask_cors\extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ~^^^^^^^^^^^^^^^^^
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\.venv\Lib\site-packages\flask\app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py", line 261, in search_tasks
+    tasks = tasks.filter(Task.priority == int(priority))
+                                          ~~~^^^^^^^^^^
+ValueError: invalid literal for int() with base 10: 'abc'
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\task_routes.py:227: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  task = Task.query.get(task_id)
+127.0.0.1 - - [15/Oct/2026 14:26:46] "DELETE /tasks/11 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:46] "DELETE /tasks/9999 HTTP/1.1" 404 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\report_routes.py:213: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  cat = Category.query.get(cat_id)
+127.0.0.1 - - [15/Oct/2026 14:26:46] "DELETE /categories/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:47] "DELETE /categories/9999 HTTP/1.1" 404 -
+D:\Pessoal\PosIA\Desafios\03-Skills\mba-ia-refactor-projects-skill\task-manager-api\routes\user_routes.py:136: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(user_id)
+127.0.0.1 - - [15/Oct/2026 14:26:47] "DELETE /users/4 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:47] "DELETE /users/9999 HTTP/1.1" 404 -
+127.0.0.1 - - [15/Oct/2026 14:26:47] "DELETE /users/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2026 14:26:47] "GET /tasks/stats HTTP/1.1" 200 -
