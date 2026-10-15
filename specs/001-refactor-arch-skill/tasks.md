@@ -120,10 +120,10 @@ história.
 
 **Independent Test**: seguindo só o README, um terceiro reproduz a execução em qualquer projeto a partir da `baseline`
 
-- [ ] T027 [P] [US5] Escrever a seção "Análise Manual" no `README.md` a partir de `docs/analise-manual.md` (problemas por projeto, severidade, justificativa)
-- [ ] T028 [P] [US5] Escrever a seção "Construção da Skill" no `README.md`: estrutura do `SKILL.md` e das referências, anti-patterns do catálogo e por quê, como foi garantido o agnosticismo, desafios encontrados e como foram resolvidos (incluindo as iterações de T007, T013, T019, T022–T026)
-- [ ] T029 [US5] Escrever a seção "Resultados" no `README.md`: findings por severidade de cada relatório, estrutura antes/depois de cada projeto, checklist de validação do enunciado preenchido para os 3 projetos, evidências das aplicações rodando (trechos de `.refactor-arch/validation-after.md` e/ou screenshots em `docs/`), observações sobre o comportamento em cada stack
-- [ ] T030 [US5] Escrever a seção "Como Executar" no `README.md`: pré-requisitos (Claude Code CLI, Python, Node, curl), comandos por projeto, como validar a refatoração, como voltar à `baseline` para reexecutar
+- [x] T027 [P] [US5] Escrever a seção "Análise Manual" no `README.md` a partir de `docs/analise-manual.md` (problemas por projeto, severidade, justificativa)
+- [x] T028 [P] [US5] Escrever a seção "Construção da Skill" no `README.md`: estrutura do `SKILL.md` e das referências, anti-patterns do catálogo e por quê, como foi garantido o agnosticismo, desafios encontrados e como foram resolvidos (incluindo as iterações de T007, T013, T019, T022–T026)
+- [x] T029 [US5] Escrever a seção "Resultados" no `README.md`: findings por severidade de cada relatório, estrutura antes/depois de cada projeto, checklist de validação do enunciado preenchido para os 3 projetos, evidências das aplicações rodando (trechos de `.refactor-arch/validation-after.md` e/ou screenshots em `docs/`), observações sobre o comportamento em cada stack
+- [x] T030 [US5] Escrever a seção "Como Executar" no `README.md`: pré-requisitos (Claude Code CLI, Python, Node, curl), comandos por projeto, como validar a refatoração, como voltar à `baseline` para reexecutar
 
 **Checkpoint**: entregável documentado
 
@@ -132,8 +132,8 @@ história.
 ## Phase 8: Polish & Cross-Cutting Concerns
 
 - [ ] T031 Rodar `/speckit-analyze` para checar a consistência entre spec, plan e tasks, e corrigir divergências encontradas nos artefatos
-- [ ] T032 Conferência final: hashes iguais das 3 cópias da skill; os 3 relatórios em `reports/`; nenhuma credencial literal nos 3 projetos refatorados; nenhum servidor órfão nas portas 3000/5000; `.gitignore` cobrindo `.venv/`, `node_modules/`, `*.db` e `.env`
-- [ ] T033 Commitar o README e enviar `main` para o fork público (`git push origin main`), conferindo no GitHub que skill, código refatorado, `reports/` e README estão visíveis
+- [x] T032 Conferência final: hashes iguais das 3 cópias da skill; os 3 relatórios em `reports/`; nenhuma credencial literal nos 3 projetos refatorados; nenhum servidor órfão nas portas 3000/5000; `.gitignore` cobrindo `.venv/`, `node_modules/`, `*.db` e `.env`
+- [x] T033 Commitar o README e enviar `main` para o fork público (`git push origin main`), conferindo no GitHub que skill, código refatorado, `reports/` e README estão visíveis
 
 ---
 
