@@ -105,6 +105,23 @@ Execute **os mesmos passos**, na mesma ordem e com os mesmos corpos. Para cada r
 passou a exigir token, rode o passo duas vezes: sem o header (esperado 403) e com o header
 (esperado o comportamento original).
 
+**Rotas protegidas por token de sessão (RF-16).** Antes delas, faça login com **dois**
+usuários do seed (A e B) e capture os tokens (`token_A`, `token_B`); envie com
+`-H "Authorization: Bearer <token>"`. Para cada rota de escrita protegida sobre um recurso
+de A, rode:
+
+| Variante | Esperado |
+|---|---|
+| sem `Authorization` | 401 |
+| token adulterado (ex.: último caractere trocado) | 401 |
+| `token_B` (outro usuário, não admin) | 403 |
+| `token_A` (dono) | comportamento original |
+| admin (`X-Admin-Token` ou token de usuário admin) | comportamento original |
+
+Inclua também a tentativa do **dono** de alterar campo privilegiado (papel/ativo) → 403.
+As variantes de ataque vêm antes da variante que altera ou exclui o recurso, para que ele
+ainda exista. Registre cada variante como um passo próprio.
+
 ## Etapa 9 — Gravar `validation-after.md` e comparar
 
 ```markdown

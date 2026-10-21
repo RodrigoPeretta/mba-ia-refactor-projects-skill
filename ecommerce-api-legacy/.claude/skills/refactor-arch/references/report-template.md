@@ -117,6 +117,11 @@ PHASE 3: REFACTORING COMPLETE
   ✓ <n>/<n> findings addressed (<p> listed as pending)
   <use ✗ e explique em uma linha em qualquer item que tenha falhado>
 
+## Recommendations Applied (CRITICAL/HIGH)
+| Finding | Recommendation clause | Applied in | Validated by |
+|---|---|---|---|
+| <AP-xx título> | <trecho da recomendação> | <arquivo:linha ou "Pending"> | <passo(s) de validation-after.md> |
+
 ## Contract Changes
 - <METHOD> <rota>: <o que mudou> — motivo: <finding>
 <ou "Nenhuma">
@@ -136,3 +141,6 @@ Evidence: .refactor-arch/behavior-before.md, .refactor-arch/validation-after.md
 Regras:
 - Um item de `Validation` só recebe ✓ se foi efetivamente executado nesta sessão.
 - Todo `CHANGED` de `validation-after.md` precisa aparecer em `Contract Changes`.
+- Em `Recommendations Applied`, cada cláusula das recomendações CRITICAL/HIGH ocupa uma
+  linha. Cláusula de segurança só conta como aplicada se um passo da validação prova o
+  efeito (ex.: requisição anônima → 401); sem isso, ela vai para `Pending`.

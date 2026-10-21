@@ -54,7 +54,7 @@ src/
 │   └── <entidade>_routes.(py|js)
 ├── middlewares/
 │   ├── error_handler.(py|js)
-│   └── auth.(py|js)              # se houver rota administrativa
+│   └── auth.(py|js)              # se houver rota administrativa ou login (token de sessão)
 └── app.(py|js)                   # composition root (create_app / buildApp)
 ```
 
@@ -91,6 +91,8 @@ Obrigatório manter, para cada endpoint original:
 Mudanças **permitidas**, sempre listadas em `Contract Changes` do resumo:
 - remover campos sensíveis da saída (senha, hash, segredos);
 - exigir token em rotas administrativas/destrutivas (§5);
+- exigir token de sessão em rotas de escrita sobre recursos de usuário: 401 sem token
+  válido, 403 para quem não é dono nem admin (§5);
 - transformar um erro 500 causado por entrada inválida em 400/404/422;
 - respostas de erro passando a ter corpo JSON padronizado.
 
@@ -123,9 +125,18 @@ Corrija **sempre**:
   aceitar apenas leitura (`SELECT`) (RF-05).
 - **Elevação de privilégio no cadastro** → o cadastro público não aceita papel privilegiado
   vindo do corpo, a menos que a requisição traga o token de admin.
+- **Token de login sem validação** → se o login do projeto **já emite token**, o token de
+  sessão é assinado e **validado** nas rotas que o relatório mandar proteger, com
+  autorização dono-ou-admin (RF-16). Emitir um token que nenhuma rota valida não conta
+  como correção.
+
+A recomendação de cada finding CRITICAL/HIGH é aplicada **por inteiro**: se ela pede para
+proteger um conjunto de rotas, todas as rotas do conjunto ficam protegidas. O que não for
+aplicado vai para `Pending` com o motivo — nunca é dado como resolvido.
 
 Fora do escopo (listar em `Pending` com a recomendação):
-- autenticação real de usuários (sessões/JWT), autorização por recurso, rate limiting;
+- **criar** autenticação de usuários num projeto que não tem login nenhum (nesse caso,
+  proteja com `X-Admin-Token`, RF-05); refresh/revogação de tokens; rate limiting;
 - migração de dados já gravados em produção (ex.: rehash de senhas existentes);
 - troca de banco de dados ou de framework.
 
@@ -135,6 +146,7 @@ Fora do escopo (listar em `Pending` com a recomendação):
 |---|---|---|
 | `SECRET_KEY` (ou equivalente da stack) | Chave da aplicação | Aleatória gerada no boot, com aviso |
 | `ADMIN_TOKEN` | Libera rotas administrativas via header `X-Admin-Token` | Ausente → rotas administrativas respondem 403 |
+| `SESSION_TOKEN_MAX_AGE` | Validade, em segundos, do token de sessão (só com login) | `3600` |
 | `DEBUG` | Modo debug | `false` |
 | `HOST` / `PORT` | Bind do servidor | `127.0.0.1` / porta original |
 | `DATABASE_URL` / `DB_PATH` | Localização do banco | Valor original do projeto |

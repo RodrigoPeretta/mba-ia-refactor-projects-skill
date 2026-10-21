@@ -105,7 +105,11 @@ Só entre aqui após uma confirmação afirmativa.
    que faltam, preservando as que já cumprem sua função.
 4. **Planejar**: monte a lista finding → transformação (`RF-xx` do playbook), com CRITICAL e
    HIGH primeiro. Todo finding do relatório precisa estar resolvido ou, se fora do escopo
-   definido nas guidelines, listado como pendência com o motivo.
+   definido nas guidelines, listado como pendência com o motivo. Para CRITICAL e HIGH,
+   **quebre a recomendação em cláusulas** (cada rota, campo ou regra que ela cita) e
+   planeje cada cláusula: a recomendação é aplicada **por inteiro**, não pela metade. Se
+   o login do projeto emite token, aplique RF-16: o token emitido tem que ser **validado** nas rotas
+   que a recomendação manda proteger (emitir sem validar não resolve nada).
 5. **Aplicar de forma incremental**, uma camada por vez: config → models/serviços →
    controllers → views/rotas → error handling/middlewares → composition root. Remova o
    código antigo só depois que o novo estiver no lugar. Mantenha o **comando de execução
@@ -121,8 +125,8 @@ Só entre aqui após uma confirmação afirmativa.
    Remova bancos e arquivos temporários gerados pela validação e restaure o backup do banco,
    se houver.
 9. **Resumo final**: imprima o bloco "Fase 3" do template com a nova estrutura (árvore),
-   validação item a item, mudanças de contrato, dependências adicionadas (com
-   justificativa) e pendências.
+   validação item a item, o mapa recomendação → aplicação → passo de validação (CRITICAL e
+   HIGH), mudanças de contrato, dependências adicionadas (com justificativa) e pendências.
 
 ## Antes de encerrar, confira
 
@@ -131,4 +135,6 @@ Só entre aqui após uma confirmação afirmativa.
 - [ ] Nenhum arquivo do projeto foi alterado antes da confirmação.
 - [ ] (Fase 3) Config sem segredos literais; models, views/rotas, controllers e error handler centralizado separados; entry point claro.
 - [ ] (Fase 3) A aplicação sobe com o comando original e não há REGRESSION em `validation-after.md`.
+- [ ] (Fase 3) Cada cláusula das recomendações CRITICAL/HIGH foi aplicada e provada por um passo da validação, ou está em `Pending` com o motivo.
+- [ ] (Fase 3) Se há login, nenhuma rota de escrita protegida aceita cliente anônimo nem token de outro usuário.
 - [ ] (Fase 3) Nenhum processo iniciado por você continua rodando.

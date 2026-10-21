@@ -5,7 +5,7 @@ genérico (faturas, clientes, contas) e servem como **padrão**: adapte nomes, e
 resposta e estilo ao projeto, preservando o contrato (ver `mvc-guidelines.md` §3).
 
 Ordem recomendada de aplicação: RF-02 → RF-06/RF-07/RF-08 (estrutura) → RF-01, RF-03,
-RF-04, RF-05, RF-09 (segurança e integridade) → RF-10 a RF-15 (qualidade).
+RF-04, RF-05, RF-16, RF-09 (segurança e integridade) → RF-10 a RF-15 (qualidade).
 
 ---
 
@@ -178,6 +178,10 @@ corpo das respostas da validação).
 
 ## RF-05 — Proteção de rota administrativa por token
 **Corrige:** AP-06
+
+Este RF cobre só rotas **administrativas** (sem usuário dono). Se o projeto tem login que
+emite token, as rotas de escrita sobre recursos de usuário usam o **token de sessão**
+(RF-16); o `X-Admin-Token` continua como credencial de operador.
 
 1. Crie o middleware/decorator que compara `X-Admin-Token` com `ADMIN_TOKEN` usando
    comparação de tempo constante; sem `ADMIN_TOKEN` configurado, responde 403.
@@ -652,3 +656,133 @@ async function subscribe(db, input) {
 
 **Verificar:** nenhum callback com mais de 2 níveis; todo erro de banco chega ao error
 handler.
+
+---
+
+## RF-16 — Validação do token de sessão e autorização por dono
+**Corrige:** AP-06 (quando o login do projeto emite token)
+
+Emitir um token assinado no login **não protege nada** se nenhuma rota o valida. Sempre que
+o login do projeto emite token, aplique os três passos juntos (a Fase 3 não cria login onde não existe):
+
+1. **Emitir**: token assinado com `SECRET_KEY` contendo só o id do usuário, com expiração
+   (`SESSION_TOKEN_MAX_AGE`, em segundos). Use a biblioteca já disponível na stack
+   (`itsdangerous` vem com Flask; `crypto.createHmac` no Node). Mantenha o campo de
+   resposta do login (ex.: `token`).
+2. **Validar** (`require_auth`): lê `Authorization: Bearer <token>`, confere assinatura e
+   expiração, carrega o usuário e recusa usuário inexistente ou inativo. Falha → **401**.
+   O usuário autenticado fica disponível ao controller (`g.current_user`, `req.user`).
+3. **Autorizar** (`ensure_owner_or_admin`): na escrita sobre um recurso que tem dono
+   (o próprio usuário, ou um registro com `user_id`), só o dono ou um admin prossegue;
+   caso contrário → **403**. Admin = `X-Admin-Token` válido (RF-05) **ou** usuário
+   autenticado com o papel administrativo do projeto. Recurso sem dono → só admin.
+   Campos privilegiados (papel, ativo) continuam exigindo admin mesmo para o dono.
+
+Aplique em **todas** as rotas que a recomendação do relatório mandar proteger (tipicamente:
+alterar/excluir usuário, excluir recursos de usuário). Leitura e cadastro público continuam
+abertos, salvo indicação do relatório.
+
+```python
+# antes — token emitido, nenhuma rota o valida
+def update_account(account_id):
+    account = Account.query.get(account_id)
+    account.email = request.json["email"]      # qualquer cliente altera qualquer conta
+    db.session.commit()
+
+# depois — src/middlewares/auth.py
+from functools import wraps
+from flask import g, request, current_app
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+
+_SALT = "session-token"
+
+def _serializer():
+    return URLSafeTimedSerializer(current_app.config["SECRET_KEY"], salt=_SALT)
+
+def issue_token(user):
+    return _serializer().dumps({"user_id": user.id})
+
+def current_user_from_request():
+    header = request.headers.get("Authorization", "")
+    if not header.startswith("Bearer "):
+        return None
+    try:
+        data = _serializer().loads(header[7:], max_age=settings.SESSION_TOKEN_MAX_AGE)
+    except (BadSignature, SignatureExpired):
+        return None
+    user = db.session.get(Account, data.get("user_id"))
+    return user if user and user.active else None
+
+def require_auth(view):
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        # X-Admin-Token válido também autentica (operador), sem usuário associado
+        g.current_user = current_user_from_request()
+        if g.current_user is None and not is_admin_request():
+            raise AppError("Autenticação necessária", 401)
+        return view(*args, **kwargs)
+    return wrapper
+
+def is_admin():
+    user = g.get("current_user")
+    return is_admin_request() or (user is not None and user.role == "admin")
+
+def ensure_owner_or_admin(owner_id):
+    user = g.get("current_user")
+    if is_admin() or (user is not None and user.id == owner_id):
+        return
+    raise AppError("Acesso negado", 403)
+
+# controller
+def update_account(account_id):
+    account = account_service.get_or_404(account_id)
+    ensure_owner_or_admin(account.id)
+    fields = validate_account_update(request.get_json(silent=True))
+    if "role" in fields or "active" in fields:
+        ensure_admin()
+    return jsonify(account_service.update(account, fields).to_dict()), 200
+
+# routes
+bp.add_url_rule("/accounts/<int:account_id>", view_func=require_auth(c.update_account),
+                methods=["PUT"])
+```
+
+```javascript
+// src/middlewares/auth.js — token HMAC sem dependência nova
+const crypto = require("crypto");
+const settings = require("../config/settings");
+
+function sign(payload) {
+  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const mac = crypto.createHmac("sha256", settings.secretKey).update(body).digest("base64url");
+  return `${body}.${mac}`;
+}
+function issueToken(user) {
+  return sign({ userId: user.id, exp: Date.now() + settings.sessionTokenMaxAge * 1000 });
+}
+function verify(token) {
+  const [body, mac] = (token || "").split(".");
+  if (!body || !mac) return null;
+  const expected = crypto.createHmac("sha256", settings.secretKey).update(body).digest("base64url");
+  if (mac.length !== expected.length ||
+      !crypto.timingSafeEqual(Buffer.from(mac), Buffer.from(expected))) return null;
+  const data = JSON.parse(Buffer.from(body, "base64url").toString());
+  return data.exp > Date.now() ? data : null;
+}
+const requireAuth = (findUser) => async (req, res, next) => {
+  const data = verify((req.get("Authorization") || "").replace(/^Bearer /, ""));
+  const user = data && (await findUser(data.userId));
+  if (!user || !user.active) return res.status(401).json({ error: "Autenticação necessária" });
+  req.user = user;
+  next();
+};
+const ensureOwnerOrAdmin = (req, ownerId) =>
+  req.user.role === "admin" || req.user.id === ownerId;
+module.exports = { issueToken, requireAuth, ensureOwnerOrAdmin };
+```
+
+Use o envelope de erro e o nome do papel administrativo **do próprio projeto**.
+
+**Verificar** (validation-procedure, Etapa 8): para cada rota protegida por sessão — sem
+token → 401; token adulterado → 401; token de **outro** usuário → 403; token do dono →
+comportamento original; admin → comportamento original. Token de usuário desativado → 401.

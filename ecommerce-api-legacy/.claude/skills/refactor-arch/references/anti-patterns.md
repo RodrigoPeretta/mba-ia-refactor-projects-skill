@@ -113,6 +113,9 @@ Nunca desça um CRITICAL de segurança (AP-01 a AP-04, AP-06) abaixo de HIGH.
     `exec`, `child_process`).
   - Token previsível (prefixo fixo + id do usuário, valor constante) e nenhuma rota que o
     valide.
+  - Login que emite token (mesmo assinado) sem nenhum ponto do código que o **verifique**
+    (busque o header `Authorization`/`Bearer`, `loads(`/`verify(` do token): rotas de
+    alteração/exclusão de usuário ou de recursos com dono aceitam cliente anônimo.
   - Cadastro público que aceita o campo de papel/perfil (`role`, `tipo`, `is_admin`) vindo do
     corpo.
 - **Falsos positivos:** rotas protegidas por decorator/middleware de auth aplicado no
@@ -120,8 +123,11 @@ Nunca desça um CRITICAL de segurança (AP-01 a AP-04, AP-06) abaixo de HIGH.
 - **Recomendação padrão:** **manter a rota** e protegê-la com token de administrador
   (fechada por padrão); para execução de SQL/comando, além do token, restringir a leitura
   (`SELECT` único). Nunca recomende remover a rota — ela faz parte do contrato que a
-  Fase 3 precisa preservar.
-- **Fix:** RF-05
+  Fase 3 precisa preservar. **Se o login do projeto emite token**, a recomendação também nomeia as
+  rotas de escrita sobre usuários e sobre recursos com dono e diz: "validar o token de
+  sessão assinado (401 sem token válido) e permitir só ao dono ou a um admin (403)"
+  (RF-16), além de RF-05 para as rotas administrativas.
+- **Fix:** RF-05; RF-16 quando o login emite token
 
 ---
 
@@ -323,7 +329,7 @@ Nunca desça um CRITICAL de segurança (AP-01 a AP-04, AP-06) abaixo de HIGH.
 | AP-03 | Senha em claro / hash fraco | CRITICAL | RF-03 |
 | AP-04 | Dado sensível exposto | CRITICAL | RF-04 |
 | AP-05 | God Class / God Module | CRITICAL | RF-06 |
-| AP-06 | Endpoint admin/destrutivo sem auth | CRITICAL | RF-05 |
+| AP-06 | Endpoint admin/destrutivo sem auth | CRITICAL | RF-05, RF-16 |
 | AP-07 | Regra de negócio em controller/rota | HIGH | RF-07 |
 | AP-08 | Estado global mutável | HIGH | RF-08 |
 | AP-09 | Múltiplas escritas sem transação | HIGH | RF-09 |
