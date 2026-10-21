@@ -17,9 +17,17 @@ Python/Flask e um em Node.js/Express. Os critérios de aceite foram atingidos no
 |---|---|---|---|
 | Stack | Python + Flask 3.1.1 | Node.js + Express ^4.18.2 | Python + Flask 3.0.0 + SQLAlchemy |
 | Ponto de partida | Monolito (4 arquivos) | God Class (3 arquivos) | Parcialmente em camadas (15 arquivos) |
-| Findings (C / H / M / L) | 21 (7 / 5 / 6 / 3) | 18 (5 / 5 / 4 / 4) | 18 (4 / 3 / 8 / 3) |
-| Validação em execução | 40 passos, 0 regressões | 12 passos, 0 regressões | 47 passos, 0 regressões |
+| Findings (C / H / M / L) | 21 (7 / 5 / 6 / 3) | 18 (5 / 5 / 4 / 4) | 19 (5 / 2 / 9 / 3) |
+| Validação em execução | 40 passos, 0 regressões | 12 passos, 0 regressões | 73 passos (23 de autenticação), 0 regressões |
 | Relatório | [audit-project-1.md](reports/audit-project-1.md) | [audit-project-2.md](reports/audit-project-2.md) | [audit-project-3.md](reports/audit-project-3.md) |
+
+> **Revisão após a correção (skill v1.2).** O feedback apontou que, no P3, o login emitia um
+> token assinado que nenhuma rota validava, e por isso `PUT /users/<id>` continuava aberto
+> a clientes anônimos. A skill ganhou o padrão **RF-16** (validar o token de sessão e
+> autorizar dono ou admin), e a Fase 3 passou a aplicar cada cláusula da recomendação. O P3
+> foi refatorado de novo a partir do código original. Detalhes em
+> [Histórico das iterações](#desafios-encontrados-e-como-resolvi) e no
+> [teste de ataque](docs/iterations/p3-v1.2-teste-de-ataque.md) (v1.1: 8/24 → v1.2: 24/24).
 
 O projeto foi desenvolvido com **SDD (Spec-Driven Development)** via
 [spec-kit](https://github.com/github/spec-kit). A constitution, a spec, o plan, a research e
@@ -121,7 +129,7 @@ anti-patterns aparecem em quais projetos. Essa tabela virou a base do catálogo 
     ├── anti-patterns.md             # área 2: catálogo AP-01…AP-21 + tabela de APIs deprecated
     ├── report-template.md           # área 3: formatos exatos das saídas das 3 fases
     ├── mvc-guidelines.md            # área 4: camadas, regras de dependência, layouts alvo
-    ├── refactoring-playbook.md      # área 5: RF-01…RF-15, com código antes/depois
+    ├── refactoring-playbook.md      # área 5: RF-01…RF-16, com código antes/depois
     └── validation-procedure.md      # apoio à Fase 3: subir, testar, comparar, encerrar processos
 ```
 
@@ -147,6 +155,14 @@ anti-patterns aparecem em quais projetos. Essa tabela virou a base do catálogo 
   continuam existindo, mas exigem o header `X-Admin-Token` igual a `ADMIN_TOKEN`, e ficam
   fechados por padrão. Assim o requisito "os endpoints originais continuam respondendo"
   convive com a correção de segurança. Toda mudança de contrato é listada no resumo final.
+- **Token emitido tem que ser validado.** Quando o login do projeto já emite token, as rotas
+  de escrita sobre usuários e sobre recursos com dono exigem `Authorization: Bearer <token>`:
+  401 sem token válido e 403 para quem não é o dono nem admin (RF-16). O `X-Admin-Token`
+  fica para as rotas administrativas sem dono. A skill não cria login onde não existe.
+- **Recomendação aplicada por inteiro.** Na Fase 3, cada recomendação CRITICAL/HIGH é
+  quebrada em cláusulas (cada rota, campo ou regra citada). Cada cláusula precisa de um
+  passo de validação que prove o efeito, ou vai para `Pending` com o motivo. O resumo final
+  mostra esse mapa na tabela `Recommendations Applied`.
 - **O layout alvo depende do ponto de partida.** Um monolito ganha um layout `src/` novo,
   como no exemplo do enunciado. Um projeto parcialmente em camadas mantém as pastas que já
   cumprem sua função e ganha só as que faltam. Nos dois casos, o comando de execução
@@ -170,12 +186,13 @@ exemplo: "chamada `execute(` cujo argumento usa `+`, `%`, `.format(` ou f-string
 variável vinda do request", em vez de algo vago como "SQL inseguro". A **AP-17** traz uma
 tabela "API obsoleta → substituto moderno" para Python, SQLAlchemy, Flask, Node e Express.
 
-O **playbook** tem 15 transformações. Todas têm código antes/depois e um passo de
+O **playbook** tem 16 transformações. Todas têm código antes/depois e um passo de
 verificação: queries parametrizadas, config via ambiente, hash de senha (com bibliotecas que
 a stack já tem, como `werkzeug.security` e `crypto.scrypt`), allowlist de serialização,
 token de admin, God Class → camadas, fat controller → service, estado global → injeção,
 transação, N+1 → JOIN/GROUP BY, error handler central, validação, APIs deprecated,
-constantes/logging/limpeza e callbacks → async/await.
+constantes/logging/limpeza, callbacks → async/await e, desde a v1.2, validação do token de
+sessão com autorização dono-ou-admin.
 
 ### Como garanti que a skill é agnóstica de tecnologia
 
@@ -202,6 +219,7 @@ constantes/logging/limpeza e callbacks → async/await.
 | **Recomendação contraditória** (iteração 1) | O relatório recomendou "remover o endpoint `/admin/query`", contra a decisão de preservar o contrato | Cada entrada de risco do catálogo ganhou uma "Recomendação padrão": proteger e restringir, nunca remover |
 | **Caminho real do SQLite** | Flask-SQLAlchemy resolve `sqlite:///tasks.db` para `instance/tasks.db` | O procedimento manda confirmar o arquivo realmente criado antes de resetar o banco entre as medições |
 | **Dados que mudam entre execuções** | Ids, timestamps e hashes diferentes a cada rodada | A comparação usa status + "forma" (tipo e chaves) e ignora valores voláteis |
+| **Token emitido e nunca validado** (feedback da correção) | No P3, o relatório recomendava "exigir token válido nas rotas de escrita sobre usuários", mas a Fase 3 só passou a **emitir** um token assinado no login. Nenhuma rota o validava, e `PUT /users/<id>` seguia aceitando que um anônimo trocasse o e-mail e a senha de outro usuário. A causa estava na própria skill: as guidelines colocavam "autenticação de usuários" fora do escopo da Fase 3, contradizendo a recomendação da Fase 2. E a validação nunca testava "usuário A altera B" | v1.2: RF-16 no playbook; escopo corrigido (validar o token que o login já emite é obrigatório); recomendação quebrada em cláusulas e provada por passo de validação; a validação roda 5 variantes por rota protegida (sem token, token adulterado, token de outro usuário, dono, admin) |
 | **Destino do relatório** | A skill não tem como saber de forma agnóstica se o projeto é o "N" | Ela grava em `.refactor-arch/audit-report.md`, e a cópia para `reports/` é um passo de entrega. Também aceita um argumento opcional com o caminho |
 
 Histórico das iterações:
@@ -211,9 +229,15 @@ Histórico das iterações:
 | v1 | P1, resposta "n" | 21 findings, 14/14 achados manuais, pausa funcionou, mas a arquitetura veio errada e uma recomendação contradizia o contrato | v1.1: rubrica de arquitetura e "recomendação padrão" |
 | v1.1 | P1 completo | Monolítica ✓, recomendação correta ✓, 0 regressões | nenhuma |
 | v1.1 | P2 completo | Sem nenhuma mudança na skill, 0 regressões | nenhuma |
-| v1.1 | P3 completo | Sem nenhuma mudança na skill, 0 regressões | nenhuma |
+| v1.1 | P3 completo | Sem nenhuma mudança na skill, 0 regressões, **mas** a recomendação do AP-06 foi aplicada pela metade (token emitido e não validado), o que só apareceu na correção | v1.2: RF-16, escopo de auth, recomendação por cláusula, variantes de ataque na validação |
+| v1.2 | P3 completo, a partir do código original | 19 findings; o AP-06 agora nomeia cada rota e a regra 401/403; 73 passos (23 de autenticação), 0 regressões; teste de ataque independente **24/24** (v1.1: 8/24) | nenhuma |
 
-O relatório da iteração 1 está em [`docs/iterations/`](docs/iterations/).
+A v1.2 só acrescenta regras que disparam quando o login **emite token**. O P1 (login sem
+token) e o P2 (sem login) não têm esse caso, então as refatorações deles, feitas com a v1.1,
+continuam válidas e não foram refeitas.
+
+O relatório da iteração 1 e o teste de ataque da v1.2 estão em
+[`docs/iterations/`](docs/iterations/).
 
 ---
 
@@ -225,7 +249,7 @@ O relatório da iteração 1 está em [`docs/iterations/`](docs/iterations/).
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | 1 · code-smells-project | 7 | 5 | 6 | 3 | **21** | 14/14 | Nenhuma (correto: Flask 3.1 com APIs atuais) |
 | 2 · ecommerce-api-legacy | 5 | 5 | 4 | 4 | **18** | 14/14 | Nenhuma no código; dependências transitivas deprecated do `sqlite3` anotadas |
-| 3 · task-manager-api | 4 | 3 | 8 | 3 | **18** | 13/14 | `Query.get()` (16 usos) e `datetime.utcnow()` (23 usos), **substituídas** na Fase 3 |
+| 3 · task-manager-api | 5 | 2 | 9 | 3 | **19** | 13/14 | `Query.get()` (16 usos) e `datetime.utcnow()` (23 usos), **substituídas** na Fase 3 |
 
 A skill também encontrou problemas que **eu não tinha visto** na análise manual:
 - **P1:** itens repetidos no mesmo pedido passam um a um na checagem de estoque e podem deixar
@@ -314,8 +338,8 @@ config/        # NOVO: settings (env + constantes)
 models/        # mantido: + regras de domínio, serialização segura
 routes/        # mantido: só mapeamento; + category_routes, system_routes
 controllers/   # NOVO: task, user, report, category, system + validators
-services/      # mantido + task, user, report, category
-middlewares/   # NOVO: error_handler, auth
+services/      # mantido + task, user, report, category, auth (token de sessão)
+middlewares/   # NOVO: error_handler, auth (Bearer + dono-ou-admin, X-Admin-Token)
 utils/         # mantido: helpers usados de fato + errors
 ```
 
@@ -335,7 +359,7 @@ utils/         # mantido: helpers usados de fato + errors
 | Relatório segue o template | ✅ | ✅ | ✅ |
 | Cada finding tem arquivo e linhas exatos | ✅ | ✅ | ✅ |
 | Ordenado CRITICAL → LOW | ✅ | ✅ | ✅ |
-| Mínimo de 5 findings | ✅ 21 | ✅ 18 | ✅ 18 |
+| Mínimo de 5 findings | ✅ 21 | ✅ 18 | ✅ 19 |
 | Detecção de APIs deprecated (se aplicável) | ✅ N/A declarado | ✅ N/A no código, dependências anotadas | ✅ 2 APIs |
 | Pausa e pede confirmação antes da Fase 3 | ✅ | ✅ | ✅ |
 | **Fase 3: Refatoração** | | | |
@@ -361,7 +385,7 @@ servidor:
 |---|---|---|
 | 1 | [`behavior-before.md`](code-smells-project/.refactor-arch/behavior-before.md) → [`validation-after.md`](code-smells-project/.refactor-arch/validation-after.md) | OK 29 · CHANGED 11 · **REGRESSION 0** |
 | 2 | [`behavior-before.md`](ecommerce-api-legacy/.refactor-arch/behavior-before.md) → [`validation-after.md`](ecommerce-api-legacy/.refactor-arch/validation-after.md) | OK 6 · CHANGED 6 · **REGRESSION 0** |
-| 3 | [`behavior-before.md`](task-manager-api/.refactor-arch/behavior-before.md) → [`validation-after.md`](task-manager-api/.refactor-arch/validation-after.md) | OK 32 · CHANGED 15 · **REGRESSION 0**, sem nenhum warning de depreciação (antes eram 25) |
+| 3 | [`behavior-before.md`](task-manager-api/.refactor-arch/behavior-before.md) → [`validation-after.md`](task-manager-api/.refactor-arch/validation-after.md) | OK 37 · CHANGED 36 · **REGRESSION 0**, sem nenhum warning de depreciação (antes eram 25). Dos 36 CHANGED, 23 são as variantes de autenticação (401/403) |
 
 Trecho do log do P1 refatorado ([`server-after.log`](code-smells-project/.refactor-arch/server-after.log)):
 
@@ -381,7 +405,20 @@ existir:
 |---|---|---|
 | 1 | 18 de 20 | login com `' OR 1=1 --`: 200 → **401**; `/admin/query` sem token: 200 → **403** |
 | 2 | 3 de 6 | 3 chamadas de admin sem token → **403** (com token: mesmo corpo do original) |
-| 3 | 19 de 23 | `priority: "alta"`: 500 → **400**; 3 DELETE sem token → **403** (com token: 200) |
+| 3 (v1.1) | 19 de 23 | `priority: "alta"`: 500 → **400**; 3 DELETE sem token → **403** (com token: 200) |
+
+No P3 (v1.2), a verificação independente é um **teste de ataque** escrito depois do
+feedback. Ele rodou contra a refatoração da v1.1 e contra a da v1.2:
+[`p3-v1.2-teste-de-ataque.md`](docs/iterations/p3-v1.2-teste-de-ataque.md).
+
+| Cenário | v1.1 | v1.2 |
+|---|:-:|:-:|
+| Anônimo troca e-mail e senha da Maria (`PUT /users/2`) | **200** | 401 |
+| Token legado, forjado ou adulterado | **200** | 401 |
+| Usuário altera outro usuário, ou a task de outro | **200** | 403 |
+| Dono altera o próprio cadastro; admin altera qualquer um | 200 | 200 |
+| Token de usuário desativado | **200** | 401 |
+| **Total** | **8/24** | **24/24** |
 
 Também conferi por fora da skill: `senha`/`password`/`secret_key` não aparecem mais em
 nenhuma resposta; `DROP TABLE` em `/admin/query` é recusado mesmo com token; o login com as
@@ -397,13 +434,16 @@ log; não ficou nenhum servidor rodando.
 | 1 | Entrada inválida (tipos, body vazio, aspas na busca) → 400 em vez de 500; pedido inexistente → 404 | AP-15, AP-14 |
 | 2 | Relatório financeiro e `DELETE /api/users/:id` exigem `X-Admin-Token` (o `api.http` foi atualizado) | AP-06 |
 | 2 | Exclusão de usuário apaga as matrículas e os pagamentos na mesma transação; checkout sem `pwd` → 400 | AP-09, AP-03 |
-| 3 | `password` sai de todas as respostas; o login devolve um token **assinado** em vez de `fake-jwt-token-<id>` | AP-04, AP-06 |
-| 3 | **Todos os `DELETE`**, além de criar ou alterar usuário com papel privilegiado ou `active`, exigem `X-Admin-Token` | AP-06 |
+| 3 | `password` sai de todas as respostas; o login devolve um token **assinado e com validade** (`SESSION_TOKEN_MAX_AGE`) em vez de `fake-jwt-token-<id>` | AP-04, AP-06 |
+| 3 | `PUT`/`DELETE /users/<id>`, `POST /tasks` e `PUT`/`DELETE /tasks/<id>` exigem `Authorization: Bearer <token>`: 401 sem token válido, 403 se quem chama não é o dono nem admin | AP-06 (RF-16) |
+| 3 | Alterar `role`/`active`, cadastrar com papel privilegiado e atribuir task a outro usuário exigem admin (`X-Admin-Token` ou token de usuário `admin`) | AP-06 |
+| 3 | `POST`/`PUT`/`DELETE /categories` (recurso sem dono) exigem admin; sem `ADMIN_TOKEN` configurado, ficam fechadas para quem não é usuário `admin` | AP-06 (RF-05) |
+| 3 | Entrada inválida → 400 em vez de 500; 404 de rota inexistente em JSON | AP-15, AP-14 |
 | 3 | Dependências sem uso removidas (`marshmallow`, `requests`) | AP-19 |
 
-A mudança mais ampla é a do P3: ali os DELETE de todos os recursos passaram a exigir token,
-porque a skill trata "excluir registro de terceiro sem autenticação" como rota destrutiva.
-Com o token, todos funcionam como no original.
+A mudança mais ampla é a do P3. As escritas sobre usuários e tasks passaram a exigir o token
+do login, e o dono e o admin continuam com o comportamento original. As leituras e o
+cadastro público (`POST /users` com papel padrão) seguem abertos, como no original.
 
 ### Como a skill se comportou em cada stack
 
@@ -416,11 +456,19 @@ Com o token, todos funcionam como no original.
 - **Flask em camadas (P3):** foi o teste de adaptação. A skill **não recriou** o projeto:
   manteve `models/`, `routes/`, `services/` e `utils/`, criou só `config/`, `controllers/`
   e `middlewares/`, passou a usar os métodos de model que já existiam e eram ignorados, e
-  separou o CRUD de categorias. Na migração de MD5, ela manteve compatibilidade: um hash MD5
-  antigo ainda permite o login e é regravado com o algoritmo novo na primeira vez.
-- **Limitações observadas:** o P3-11 (categoria órfã) passou despercebido. Autenticação
-  real (JWT ou sessões, autorização por recurso) ficou fora do escopo e foi listada como
-  pendência nos resumos das Fases 3.
+  separou o CRUD de categorias. Na v1.2, ela reaproveitou o login existente: o token passou
+  a ser validado (`services/auth_service.py` + `middlewares/auth.py`) e a autorização é
+  dono-ou-admin.
+- **Limitações observadas:**
+  - O P3-11 (categoria órfã) passou despercebido nas duas versões.
+  - Na v1.1, a recomendação de autenticação do P3 foi aplicada pela metade e o roteiro de
+    validação não pegou a falha. Ela só apareceu na correção e foi resolvida na v1.2.
+  - Hashes MD5 já gravados: a execução da v1.1 regravava o hash no primeiro login. A da
+    v1.2 seguiu a alternativa "re-hash pelo seed" da própria recomendação, então um banco
+    antigo com MD5 responde 401 até rodar o `seed.py` ou trocar a senha. Isso só afeta
+    bancos criados antes da refatoração, e as guidelines tratam migração de dados já
+    gravados como fora do escopo.
+  - Refresh e revogação de token e rate limiting ficaram fora do escopo.
 
 ---
 
@@ -469,12 +517,18 @@ caminho.
 
 ### Reexecutar a partir do código original
 
-O código original dos 3 projetos está marcado pela tag `baseline`:
+O código original dos 3 projetos está marcado pela tag `baseline`. Na raiz do repositório:
 
 ```bash
-git checkout baseline -- <projeto>/      # restaura o código original do projeto
-git clean -fdx <projeto>/ -e .claude/    # remove src/, .refactor-arch/, bancos, venvs
+# restaura o código original e APAGA os arquivos criados pela refatoração (mantém a skill)
+git restore --source=baseline --staged --worktree -- <projeto>/ ":(exclude)<projeto>/.claude"
+# remove o que não é rastreado: .refactor-arch/, bancos, __pycache__, venvs
+git clean -fdx <projeto>/ -e .claude
 ```
+
+> Use `git restore`, e não `git checkout baseline -- <projeto>/`. O `checkout` não apaga os
+> arquivos criados depois da baseline (`controllers/`, `config/`…), e a skill encontraria
+> um projeto meio refatorado.
 
 ### Validar que a refatoração funcionou
 
@@ -491,6 +545,18 @@ git clean -fdx <projeto>/ -e .claude/    # remove src/, .refactor-arch/, bancos,
 3. Para as rotas administrativas, suba com `ADMIN_TOKEN=<valor>` e envie o header
    `X-Admin-Token: <valor>`. As variáveis de cada projeto estão documentadas em
    `.env.example`.
+4. No P3, as escritas sobre usuários e tasks usam o token do login:
+
+   ```bash
+   TOKEN=$(curl -s -X POST http://127.0.0.1:5000/login -H "Content-Type: application/json" \
+     -d '{"email":"maria@email.com","password":"abcd"}' | python -c "import sys,json;print(json.load(sys.stdin)['token'])")
+   curl -i -X PUT http://127.0.0.1:5000/users/2 -H "Content-Type: application/json" \
+     -d '{"name":"Maria S."}'                                  # 401: sem token
+   curl -i -X PUT http://127.0.0.1:5000/users/3 -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" -d '{"name":"x"}'     # 403: não é o dono
+   curl -i -X PUT http://127.0.0.1:5000/users/2 -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" -d '{"name":"Maria S."}'  # 200: dono
+   ```
 
 ---
 
