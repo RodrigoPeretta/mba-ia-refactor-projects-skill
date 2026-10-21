@@ -11,7 +11,8 @@ em 3 fases sobre qualquer projeto backend:
    subindo a versão original e a refatorada e comparando as respostas de todos os endpoints.
 
 A mesma pasta da skill, idêntica byte a byte, foi executada nos 3 projetos legados: dois em
-Python/Flask e um em Node.js/Express. Os critérios de aceite foram atingidos nos 3.
+Python/Flask e um em Node.js/Express. O P1 e o P2 rodaram com a v1.1, e o P3 com a v1.2
+(ver a revisão abaixo). Os critérios de aceite foram atingidos nos 3.
 
 | | Projeto 1 · code-smells-project | Projeto 2 · ecommerce-api-legacy | Projeto 3 · task-manager-api |
 |---|---|---|---|
@@ -152,8 +153,9 @@ anti-patterns aparecem em quais projetos. Essa tabela virou a base do catálogo 
   cada passo como `OK`, `CHANGED (intencional)` ou `REGRESSION` em `validation-after.md`.
   Qualquer `REGRESSION` obriga a corrigir antes de declarar a fase concluída.
 - **Proteger, não remover.** Endpoints perigosos (execução de SQL, reset de banco, exclusões)
-  continuam existindo, mas exigem o header `X-Admin-Token` igual a `ADMIN_TOKEN`, e ficam
-  fechados por padrão. Assim o requisito "os endpoints originais continuam respondendo"
+  continuam existindo, mas exigem credencial e ficam fechados por padrão. Rotas
+  administrativas usam o header `X-Admin-Token` igual a `ADMIN_TOKEN`. Rotas sobre recursos
+  de usuário usam o token do login, quando o projeto tem login (item seguinte). Assim o requisito "os endpoints originais continuam respondendo"
   convive com a correção de segurança. Toda mudança de contrato é listada no resumo final.
 - **Token emitido tem que ser validado.** Quando o login do projeto já emite token, as rotas
   de escrita sobre usuários e sobre recursos com dono exigem `Authorization: Bearer <token>`:
@@ -576,7 +578,7 @@ mba-ia-refactor-projects-skill/
 │   └── audit-project-3.md
 ├── docs/
 │   ├── analise-manual.md           # análise manual completa
-│   └── iterations/                 # relatórios de iterações anteriores da skill
+│   └── iterations/                 # iteração 1 (P1) e teste de ataque do P3 (v1.1 × v1.2)
 ├── specs/001-refactor-arch-skill/  # SDD: spec, plan, research, data-model, contracts, tasks
 └── .specify/, .claude/skills/speckit-*   # spec-kit
 ```
