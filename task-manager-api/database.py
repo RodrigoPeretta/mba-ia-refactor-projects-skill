@@ -1,20 +1,20 @@
+import logging
+
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import SQLAlchemyError
+
+from utils.errors import AppError
+
+logger = logging.getLogger(__name__)
 
 db = SQLAlchemy()
 
 
-def init_db(app):
-    """Inicializa a extensão e cria as tabelas que ainda não existem."""
-    db.init_app(app)
-    with app.app_context():
-        import models  # noqa: F401 — registra os models no metadata antes do create_all
-        db.create_all()
-
-
-def commit():
-    """Confirma a unidade de trabalho; desfaz tudo se o commit falhar."""
+def commit(error_message):
+    """Confirma a unidade de trabalho da requisição; em falha desfaz tudo e responde 500."""
     try:
         db.session.commit()
-    except Exception:
+    except SQLAlchemyError:
         db.session.rollback()
-        raise
+        logger.exception(error_message)
+        raise AppError(error_message, 500)

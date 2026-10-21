@@ -1,9 +1,10 @@
-"""Regras de negócio e persistência de tasks."""
+"""Regras e consultas de tasks."""
 import logging
 
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.orm import joinedload
 
+from config.settings import DONE_STATUS, TASK_STATUSES
 from database import commit, db
 from models.category import Category
 from models.task import Task
@@ -14,112 +15,109 @@ from utils.helpers import calculate_percentage, utcnow
 logger = logging.getLogger(__name__)
 
 
-def get_or_404(task_id):
+def get_task(task_id):
     task = db.session.get(Task, task_id)
-    if not task:
+    if task is None:
         raise NotFoundError('Task não encontrada')
     return task
 
 
-def list_with_owner_names():
-    """Todas as tasks com nome do usuário e da categoria (uma única query com JOIN)."""
-    now = utcnow()
-    tasks = db.session.scalars(
-        db.select(Task)
+def task_detail(task):
+    return {**task.to_dict(), 'overdue': task.is_overdue()}
+
+
+def list_tasks():
+    """Tasks com nome do usuário e da categoria, carregados na mesma consulta."""
+    query = (
+        select(Task)
         .options(joinedload(Task.user), joinedload(Task.category))
         .order_by(Task.id)
-    ).all()
-    return [
-        {
-            **task.to_dict(),
-            'overdue': task.is_overdue(now),
-            'user_name': task.user.name if task.user else None,
-            'category_name': task.category.name if task.category else None,
-        }
-        for task in tasks
-    ]
+    )
+    now = utcnow()
+    result = []
+    for task in db.session.scalars(query):
+        data = task.to_dict()
+        data['overdue'] = task.is_overdue(now)
+        data['user_name'] = task.user.name if task.user else None
+        data['category_name'] = task.category.name if task.category else None
+        result.append(data)
+    return result
 
 
-def _exists(model, pk):
-    if not isinstance(pk, int) or isinstance(pk, bool):
-        return False
-    return db.session.get(model, pk) is not None
-
-
-def _ensure_references(fields):
-    if fields.get('user_id') and not _exists(User, fields['user_id']):
-        raise NotFoundError('Usuário não encontrado')
-    if fields.get('category_id') and not _exists(Category, fields['category_id']):
-        raise NotFoundError('Categoria não encontrada')
-
-
-def create(fields):
-    _ensure_references(fields)
-    task = Task(**fields)
-    db.session.add(task)
-    commit()
-    logger.info('Task criada: id=%s', task.id)
-    return task
-
-
-def update(task, fields):
-    _ensure_references(fields)
-    for name, value in fields.items():
-        setattr(task, name, value)
-    task.updated_at = utcnow()
-    commit()
-    logger.info('Task atualizada: id=%s', task.id)
-    return task
-
-
-def delete(task):
-    task_id = task.id
-    db.session.delete(task)
-    commit()
-    logger.info('Task deletada: id=%s', task_id)
-
-
-def search(text=None, status=None, priority=None, user_id=None):
-    query = db.select(Task).order_by(Task.id)
+def search_tasks(text=None, status=None, priority=None, user_id=None):
+    query = select(Task).order_by(Task.id)
     if text:
-        query = query.where(db.or_(Task.title.like(f'%{text}%'),
-                                   Task.description.like(f'%{text}%')))
+        pattern = f'%{text}%'
+        query = query.where(db.or_(Task.title.like(pattern), Task.description.like(pattern)))
     if status:
         query = query.where(Task.status == status)
     if priority is not None:
         query = query.where(Task.priority == priority)
     if user_id is not None:
         query = query.where(Task.user_id == user_id)
-    return db.session.scalars(query).all()
+    return [task.to_dict() for task in db.session.scalars(query)]
 
 
-def list_by_user(user_id):
-    return db.session.scalars(
-        db.select(Task).where(Task.user_id == user_id).order_by(Task.id)
-    ).all()
-
-
-def count_by(column):
-    """Contagem de tasks agrupada por uma coluna (um único GROUP BY)."""
-    rows = db.session.execute(db.select(column, func.count(Task.id)).group_by(column)).all()
-    return {value: count for value, count in rows}
+def count_by_status():
+    rows = db.session.execute(select(Task.status, func.count()).group_by(Task.status)).all()
+    counts = dict.fromkeys(TASK_STATUSES, 0)
+    counts.update({status: total for status, total in rows if status in counts})
+    return counts
 
 
 def count_overdue(now=None):
-    now = now or utcnow()
-    return db.session.scalar(db.select(func.count(Task.id)).where(Task.overdue_clause(now)))
+    return db.session.scalar(
+        select(func.count()).select_from(Task).where(Task.overdue_clause(now or utcnow()))
+    )
 
 
-def stats():
-    by_status = count_by(Task.status)
-    total = sum(by_status.values())
-    done = by_status.get('done', 0)
+def task_stats():
+    total = db.session.scalar(select(func.count()).select_from(Task))
+    by_status = count_by_status()
     return {
         'total': total,
-        'pending': by_status.get('pending', 0),
-        'in_progress': by_status.get('in_progress', 0),
-        'done': done,
-        'cancelled': by_status.get('cancelled', 0),
+        **by_status,
         'overdue': count_overdue(),
-        'completion_rate': calculate_percentage(done, total),
+        'completion_rate': calculate_percentage(by_status[DONE_STATUS], total),
     }
+
+
+def _ensure_references(fields):
+    if fields.get('user_id') and db.session.get(User, fields['user_id']) is None:
+        raise NotFoundError('Usuário não encontrado')
+    if fields.get('category_id') and db.session.get(Category, fields['category_id']) is None:
+        raise NotFoundError('Categoria não encontrada')
+
+
+def _apply(task, fields):
+    for name in ('title', 'description', 'status', 'priority', 'user_id', 'category_id', 'due_date'):
+        if name in fields:
+            setattr(task, name, fields[name])
+    if 'tags' in fields:
+        task.set_tags(fields['tags'])
+
+
+def create_task(fields):
+    _ensure_references(fields)
+    task = Task()
+    _apply(task, fields)
+    db.session.add(task)
+    commit('Erro ao criar task')
+    logger.info('Task criada: id=%s', task.id)
+    return task
+
+
+def update_task(task, fields):
+    _ensure_references(fields)
+    _apply(task, fields)
+    task.updated_at = utcnow()
+    commit('Erro ao atualizar')
+    logger.info('Task atualizada: id=%s', task.id)
+    return task
+
+
+def delete_task(task):
+    task_id = task.id
+    db.session.delete(task)
+    commit('Erro ao deletar')
+    logger.info('Task deletada: id=%s', task_id)

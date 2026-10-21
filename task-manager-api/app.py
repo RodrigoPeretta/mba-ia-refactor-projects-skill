@@ -1,11 +1,12 @@
-"""Composition root e entry point: cria a aplicação e conecta as camadas."""
+"""Composition root e entry point da Task Manager API (`python app.py`)."""
 import logging
 
 from flask import Flask
 from flask_cors import CORS
 
+import models  # noqa: F401  registra os models antes do create_all
 from config import settings
-from database import init_db
+from database import db
 from middlewares.error_handler import register_error_handlers
 from routes.category_routes import category_bp
 from routes.report_routes import report_bp
@@ -18,33 +19,30 @@ logger = logging.getLogger(__name__)
 
 
 def create_app():
-    logging.basicConfig(level=settings.LOG_LEVEL,
-                        format='%(asctime)s %(levelname)s %(name)s: %(message)s')
+    logging.basicConfig(level=settings.LOG_LEVEL, format='%(asctime)s %(levelname)s %(name)s: %(message)s')
 
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = settings.DATABASE_URL
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = settings.SECRET_KEY
-    if not settings.SECRET_KEY_FROM_ENV:
-        logger.warning('SECRET_KEY não definida; usando chave temporária (tokens não sobrevivem a reinícios)')
-    if not settings.ADMIN_TOKEN:
-        logger.warning('ADMIN_TOKEN não definido; rotas administrativas responderão 403')
+    if settings.SECRET_KEY_GENERATED:
+        logger.warning('SECRET_KEY não definida; usando chave temporária (tokens expiram a cada reinício)')
 
     if settings.CORS_ORIGINS:
         CORS(app, origins=settings.CORS_ORIGINS)
 
-    init_db(app)
-
+    db.init_app(app)
     app.extensions['notification_service'] = NotificationService(
-        host=settings.SMTP_HOST,
-        port=settings.SMTP_PORT,
-        user=settings.SMTP_USER,
-        password=settings.SMTP_PASSWORD,
+        settings.SMTP_HOST, settings.SMTP_PORT, settings.SMTP_USER, settings.SMTP_PASSWORD
     )
 
+    register_error_handlers(app)
     for blueprint in (system_bp, task_bp, user_bp, category_bp, report_bp):
         app.register_blueprint(blueprint)
-    register_error_handlers(app)
+
+    with app.app_context():
+        db.create_all()
+
     return app
 
 

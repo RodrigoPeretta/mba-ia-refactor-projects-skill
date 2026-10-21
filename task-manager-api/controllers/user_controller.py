@@ -1,61 +1,53 @@
-from flask import current_app, jsonify, request
+from flask import jsonify, request
 
-from config import settings
-from controllers.validators import (validate_login, validate_role, validate_user_create,
-                                    validate_user_update)
-from middlewares.auth import ensure_admin
-from services import task_service, user_service
-from utils.helpers import utcnow
+from config.settings import DEFAULT_ROLE
+from controllers import validators
+from middlewares.auth import ensure_admin, ensure_authenticated, ensure_owner_or_admin
+from services import auth_service, user_service
 
 
 def list_users():
-    return jsonify(user_service.list_with_task_count()), 200
+    return jsonify(user_service.list_users()), 200
 
 
 def get_user(user_id):
-    user = user_service.get_or_404(user_id)
-    tasks = task_service.list_by_user(user_id)
-    return jsonify({**user.to_dict(), 'tasks': [task.to_dict() for task in tasks]}), 200
+    return jsonify(user_service.user_detail(user_service.get_user(user_id))), 200
 
 
 def create_user():
-    data = validate_user_create(request.get_json(silent=True))
-    user_service.ensure_email_available(data['email'])
-    validate_role(data['role'])
-    if data['role'] != settings.DEFAULT_ROLE:
-        # Papel privilegiado só pode ser atribuído por um administrador.
+    fields = validators.validate_user_create(request.get_json(silent=True))
+    if fields['role'] != DEFAULT_ROLE:
+        # cadastro com papel privilegiado só por admin
+        ensure_authenticated()
         ensure_admin()
-    user = user_service.create(**data)
-    return jsonify(user.to_dict()), 201
+    return jsonify(user_service.create_user(fields).to_dict()), 201
 
 
 def update_user(user_id):
-    user = user_service.get_or_404(user_id)
-    fields = validate_user_update(request.get_json(silent=True))
+    user = user_service.get_user(user_id)
+    ensure_owner_or_admin(user.id)
+    fields = validators.validate_user_update(request.get_json(silent=True))
     if 'role' in fields or 'active' in fields:
-        # Alterar papel ou ativação de uma conta é operação administrativa.
         ensure_admin()
-    user = user_service.update(user, fields)
-    return jsonify(user.to_dict()), 200
+    return jsonify(user_service.update_user(user, fields).to_dict()), 200
 
 
 def delete_user(user_id):
-    user_service.delete(user_service.get_or_404(user_id))
+    user = user_service.get_user(user_id)
+    ensure_owner_or_admin(user.id)
+    user_service.delete_user(user)
     return jsonify({'message': 'Usuário deletado com sucesso'}), 200
 
 
 def get_user_tasks(user_id):
-    user_service.get_or_404(user_id)
-    now = utcnow()
-    tasks = task_service.list_by_user(user_id)
-    return jsonify([task.to_summary_dict(now) for task in tasks]), 200
+    return jsonify(user_service.user_tasks(user_service.get_user(user_id))), 200
 
 
 def login():
-    email, password = validate_login(request.get_json(silent=True))
+    email, password = validators.validate_login(request.get_json(silent=True))
     user = user_service.authenticate(email, password)
     return jsonify({
         'message': 'Login realizado com sucesso',
         'user': user.to_dict(),
-        'token': user_service.issue_token(user, current_app.config['SECRET_KEY']),
+        'token': auth_service.issue_token(user),
     }), 200

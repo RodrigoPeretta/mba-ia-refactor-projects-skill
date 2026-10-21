@@ -1,197 +1,236 @@
-"""Validação de entrada única, usada pela criação e pela atualização de cada recurso.
+"""Validação de entrada por recurso. Criação e atualização compartilham as mesmas regras.
 
-As mensagens de erro são as mesmas que a API já devolvia (fazem parte do contrato).
+Cada função devolve só os campos aceitos, já normalizados, ou lança ValidationError (400)
+com as mensagens originais da API.
 """
-import re
-from datetime import datetime
-
-from config import settings
+from config.settings import (
+    DATE_FORMAT,
+    DEFAULT_CATEGORY_COLOR,
+    DEFAULT_PRIORITY,
+    DEFAULT_ROLE,
+    DEFAULT_TASK_STATUS,
+    MAX_TITLE_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    MIN_TITLE_LENGTH,
+    USER_ROLES,
+)
 from models.task import Task
 from utils.errors import ValidationError
+from utils.helpers import is_valid_color, parse_date, validate_email
 
 
-def require_body(data):
-    if not data or not isinstance(data, dict):
+def _is_int(value):
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def require_object(data, allow_empty=False):
+    if not isinstance(data, dict) or (not data and not allow_empty):
         raise ValidationError('Dados inválidos')
     return data
 
 
-def _is_text(value):
-    return isinstance(value, str)
-
-
-def _parse_date(value, message):
-    try:
-        return datetime.strptime(value, settings.DATE_FORMAT)
-    except (TypeError, ValueError):
-        raise ValidationError(message)
-
-
-def _normalize_tags(tags):
-    if tags is None or _is_text(tags):
-        return tags
-    if isinstance(tags, list) and all(_is_text(tag) for tag in tags):
-        return ','.join(tags)
-    raise ValidationError('Tags inválidas')
-
-
-def _reference_id(value):
-    """IDs de usuário/categoria vazios significam "sem vínculo"."""
-    return value if value else None
-
-
-# --- Tasks ----------------------------------------------------------------
-
-def validate_task(data, partial=False):
-    """Valida o corpo de POST (partial=False) ou PUT (partial=True) de /tasks."""
-    require_body(data)
-    fields = {}
-
-    if not partial or 'title' in data:
-        title = data.get('title')
-        if not partial and not title:
-            raise ValidationError('Título é obrigatório')
-        if not _is_text(title):
-            raise ValidationError('Título inválido')
-        if len(title) < settings.MIN_TITLE_LENGTH:
-            raise ValidationError('Título muito curto')
-        if len(title) > settings.MAX_TITLE_LENGTH:
-            raise ValidationError('Título muito longo')
-        fields['title'] = title
-
-    if not partial or 'description' in data:
-        fields['description'] = data.get('description', '')
-
-    if not partial or 'status' in data:
-        status = data.get('status', settings.DEFAULT_STATUS)
-        if not Task.is_valid_status(status):
-            raise ValidationError('Status inválido')
-        fields['status'] = status
-
-    if not partial or 'priority' in data:
-        priority = data.get('priority', settings.DEFAULT_PRIORITY)
-        if not Task.is_valid_priority(priority):
-            raise ValidationError('Prioridade deve ser entre 1 e 5')
-        fields['priority'] = priority
-
-    for key in ('user_id', 'category_id'):
-        if not partial or key in data:
-            fields[key] = _reference_id(data.get(key))
-
-    if partial:
-        if 'due_date' in data:
-            due_date = data['due_date']
-            fields['due_date'] = (_parse_date(due_date, 'Formato de data inválido')
-                                  if due_date else None)
-        if 'tags' in data:
-            fields['tags'] = _normalize_tags(data['tags'])
-    else:
-        if data.get('due_date'):
-            fields['due_date'] = _parse_date(
-                data['due_date'], 'Formato de data inválido. Use YYYY-MM-DD')
-        if data.get('tags'):
-            fields['tags'] = _normalize_tags(data['tags'])
-
-    return fields
-
-
-def parse_int_param(value, name):
-    """Converte um parâmetro de query string opcional para inteiro."""
+def parse_int_param(value, message):
+    """Parâmetro inteiro opcional da query string ('' ou ausente → None)."""
     if not value:
         return None
     try:
         return int(value)
     except ValueError:
-        raise ValidationError(f'Parâmetro {name} inválido')
+        raise ValidationError(message)
 
 
-# --- Usuários -------------------------------------------------------------
+# --- Tasks -----------------------------------------------------------------------------
 
-def _valid_email(email):
-    return _is_text(email) and re.match(settings.EMAIL_REGEX, email) is not None
+def _title(title, missing_message=None):
+    if missing_message and not title:
+        raise ValidationError(missing_message)
+    if not isinstance(title, str):
+        raise ValidationError('Título inválido')
+    if len(title) < MIN_TITLE_LENGTH:
+        raise ValidationError('Título muito curto')
+    if len(title) > MAX_TITLE_LENGTH:
+        raise ValidationError('Título muito longo')
+    return title
 
 
-def validate_user_create(data):
-    require_body(data)
-    name = data.get('name')
-    email = data.get('email')
-    password = data.get('password')
+def _status(status):
+    if not Task.validate_status(status):
+        raise ValidationError('Status inválido')
+    return status
 
-    if not name:
-        raise ValidationError('Nome é obrigatório')
-    if not email:
-        raise ValidationError('Email é obrigatório')
-    if not password:
-        raise ValidationError('Senha é obrigatória')
-    if not _is_text(name):
-        raise ValidationError('Nome inválido')
-    if not _valid_email(email):
+
+def _priority(priority):
+    if not _is_int(priority):
+        raise ValidationError('Prioridade inválida')
+    if not Task.validate_priority(priority):
+        raise ValidationError('Prioridade deve ser entre 1 e 5')
+    return priority
+
+
+def _reference(value, message):
+    """user_id/category_id: vazio → None; senão precisa ser inteiro."""
+    if not value:
+        return None
+    if not _is_int(value):
+        raise ValidationError(message)
+    return value
+
+
+def _due_date(value, message):
+    if not value:
+        return None
+    parsed = parse_date(value, DATE_FORMAT)
+    if parsed is None:
+        raise ValidationError(message)
+    return parsed
+
+
+def _tags(tags):
+    if tags is None or isinstance(tags, str):
+        return tags
+    if isinstance(tags, list) and all(isinstance(tag, str) for tag in tags):
+        return tags
+    raise ValidationError('Tags inválidas')
+
+
+def _description(description):
+    if description is not None and not isinstance(description, str):
+        raise ValidationError('Descrição inválida')
+    return description
+
+
+def validate_task_create(data):
+    data = require_object(data)
+    fields = {
+        'title': _title(data.get('title'), missing_message='Título é obrigatório'),
+        'description': _description(data.get('description', '')),
+        'status': _status(data.get('status', DEFAULT_TASK_STATUS)),
+        'priority': _priority(data.get('priority', DEFAULT_PRIORITY)),
+        'user_id': _reference(data.get('user_id'), 'Usuário inválido'),
+        'category_id': _reference(data.get('category_id'), 'Categoria inválida'),
+        'due_date': _due_date(data.get('due_date'), 'Formato de data inválido. Use YYYY-MM-DD'),
+    }
+    if data.get('tags'):
+        fields['tags'] = _tags(data['tags'])
+    return fields
+
+
+def validate_task_update(data):
+    data = require_object(data)
+    fields = {}
+    if 'title' in data:
+        fields['title'] = _title(data['title'])
+    if 'description' in data:
+        fields['description'] = _description(data['description'])
+    if 'status' in data:
+        fields['status'] = _status(data['status'])
+    if 'priority' in data:
+        fields['priority'] = _priority(data['priority'])
+    if 'user_id' in data:
+        fields['user_id'] = _reference(data['user_id'], 'Usuário inválido')
+    if 'category_id' in data:
+        fields['category_id'] = _reference(data['category_id'], 'Categoria inválida')
+    if 'due_date' in data:
+        fields['due_date'] = _due_date(data['due_date'], 'Formato de data inválido')
+    if 'tags' in data:
+        fields['tags'] = _tags(data['tags'])
+    return fields
+
+
+# --- Usuários ------------------------------------------------------------------------------
+
+def _email(email):
+    if not validate_email(email):
         raise ValidationError('Email inválido')
-    if not _is_text(password) or len(password) < settings.MIN_PASSWORD_LENGTH:
-        raise ValidationError('Senha deve ter no mínimo 4 caracteres')
-
-    return {'name': name, 'email': email, 'password': password,
-            'role': data.get('role', settings.DEFAULT_ROLE)}
+    return email
 
 
-def validate_role(role):
-    if role not in settings.VALID_ROLES:
+def _role(role):
+    if role not in USER_ROLES:
         raise ValidationError('Role inválido')
     return role
 
 
+def validate_user_create(data):
+    data = require_object(data)
+    name, email, password = data.get('name'), data.get('email'), data.get('password')
+    if not name or not isinstance(name, str):
+        raise ValidationError('Nome é obrigatório')
+    if not email:
+        raise ValidationError('Email é obrigatório')
+    if not password or not isinstance(password, str):
+        raise ValidationError('Senha é obrigatória')
+    _email(email)
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise ValidationError(f'Senha deve ter no mínimo {MIN_PASSWORD_LENGTH} caracteres')
+    return {
+        'name': name,
+        'email': email,
+        'password': password,
+        'role': _role(data.get('role', DEFAULT_ROLE)),
+    }
+
+
 def validate_user_update(data):
-    require_body(data)
+    data = require_object(data)
     fields = {}
     if 'name' in data:
-        if not data['name'] or not _is_text(data['name']):
+        if not data['name'] or not isinstance(data['name'], str):
             raise ValidationError('Nome é obrigatório')
         fields['name'] = data['name']
     if 'email' in data:
-        if not _valid_email(data['email']):
-            raise ValidationError('Email inválido')
-        fields['email'] = data['email']
+        fields['email'] = _email(data['email'])
     if 'password' in data:
         password = data['password']
-        if not _is_text(password) or len(password) < settings.MIN_PASSWORD_LENGTH:
+        if not isinstance(password, str) or len(password) < MIN_PASSWORD_LENGTH:
             raise ValidationError('Senha muito curta')
         fields['password'] = password
     if 'role' in data:
-        fields['role'] = validate_role(data['role'])
+        fields['role'] = _role(data['role'])
     if 'active' in data:
         if not isinstance(data['active'], bool):
-            raise ValidationError('Campo active deve ser booleano')
+            raise ValidationError('Campo active inválido')
         fields['active'] = data['active']
     return fields
 
 
 def validate_login(data):
-    require_body(data)
-    email = data.get('email')
-    password = data.get('password')
-    if not email or not password or not _is_text(email) or not _is_text(password):
+    data = require_object(data)
+    email, password = data.get('email'), data.get('password')
+    if not email or not password or not isinstance(email, str) or not isinstance(password, str):
         raise ValidationError('Email e senha são obrigatórios')
     return email, password
 
 
-# --- Categorias -----------------------------------------------------------
+# --- Categorias ----------------------------------------------------------------------------
 
-def _validate_color(color):
-    if not _is_text(color) or not re.match(settings.COLOR_REGEX, color):
+def _color(color):
+    if not is_valid_color(color):
         raise ValidationError('Cor inválida')
     return color
 
 
-def validate_category(data, partial=False):
-    require_body(data)
+def validate_category_create(data):
+    data = require_object(data)
+    name = data.get('name')
+    if not name or not isinstance(name, str):
+        raise ValidationError('Nome é obrigatório')
+    return {
+        'name': name,
+        'description': _description(data.get('description', '')),
+        'color': _color(data.get('color', DEFAULT_CATEGORY_COLOR)),
+    }
+
+
+def validate_category_update(data):
+    data = require_object(data, allow_empty=True)
     fields = {}
-    if not partial or 'name' in data:
-        name = data.get('name')
-        if not name or not _is_text(name):
+    if 'name' in data:
+        if not data['name'] or not isinstance(data['name'], str):
             raise ValidationError('Nome é obrigatório')
-        fields['name'] = name
-    if not partial or 'description' in data:
-        fields['description'] = data.get('description', '')
-    if not partial or 'color' in data:
-        fields['color'] = _validate_color(data.get('color', settings.DEFAULT_COLOR))
+        fields['name'] = data['name']
+    if 'description' in data:
+        fields['description'] = _description(data['description'])
+    if 'color' in data:
+        fields['color'] = _color(data['color'])
     return fields

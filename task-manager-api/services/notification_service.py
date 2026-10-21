@@ -1,4 +1,4 @@
-"""Notificações por e-mail. O transporte SMTP é configurado pelo composition root."""
+"""Notificações por e-mail. A configuração SMTP e a fábrica de conexão são injetadas."""
 import logging
 import smtplib
 from email.message import EmailMessage
@@ -14,12 +14,9 @@ class NotificationService:
         self.port = port
         self.user = user
         self.password = password
-        self._smtp_factory = smtp_factory
+        self.smtp_factory = smtp_factory
+        self.enabled = bool(user and password)
         self.notifications = []
-
-    @property
-    def enabled(self):
-        return bool(self.host and self.user and self.password)
 
     def send_email(self, to, subject, body):
         if not self.enabled:
@@ -31,19 +28,19 @@ class NotificationService:
         message['Subject'] = subject
         message.set_content(body)
         try:
-            with self._smtp_factory(self.host, self.port) as server:
+            with self.smtp_factory(self.host, self.port) as server:
                 server.starttls()
                 server.login(self.user, self.password)
                 server.send_message(message)
-            return True
         except (smtplib.SMTPException, OSError):
             logger.exception('Falha ao enviar e-mail')
             return False
+        logger.info('E-mail enviado: assunto=%s', subject)
+        return True
 
     def notify_task_assigned(self, user, task):
         subject = f"Nova task atribuída: {task.title}"
-        body = (f"Olá {user.name},\n\nA task '{task.title}' foi atribuída a você.\n\n"
-                f"Prioridade: {task.priority}\nStatus: {task.status}")
+        body = f"Olá {user.name},\n\nA task '{task.title}' foi atribuída a você.\n\nPrioridade: {task.priority}\nStatus: {task.status}"
         self.send_email(user.email, subject, body)
         self.notifications.append({
             'type': 'task_assigned',

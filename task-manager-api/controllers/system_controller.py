@@ -1,8 +1,8 @@
-import datetime
+from datetime import datetime
 
 
 def health():
-    return {'status': 'ok', 'timestamp': str(datetime.datetime.now())}
+    return {'status': 'ok', 'timestamp': str(datetime.now())}
 
 
 def index():

@@ -1,44 +1,53 @@
-"""Persistência de categorias."""
-from sqlalchemy import func
+"""Regras e consultas de categorias."""
+import logging
+
+from sqlalchemy import func, select
 
 from database import commit, db
 from models.category import Category
 from models.task import Task
 from utils.errors import NotFoundError
 
+logger = logging.getLogger(__name__)
 
-def get_or_404(category_id):
+
+def get_category(category_id):
     category = db.session.get(Category, category_id)
-    if not category:
+    if category is None:
         raise NotFoundError('Categoria não encontrada')
     return category
 
 
-def list_with_task_count():
-    rows = db.session.execute(
-        db.select(Category, func.count(Task.id))
-        .outerjoin(Task, Task.category_id == Category.id)
-        .group_by(Category.id)
-        .order_by(Category.id)
-    ).all()
-    return [{**category.to_dict(), 'task_count': count} for category, count in rows]
+def list_categories():
+    counts = dict(
+        db.session.execute(
+            select(Task.category_id, func.count())
+            .where(Task.category_id.isnot(None))
+            .group_by(Task.category_id)
+        ).all()
+    )
+    categories = db.session.scalars(select(Category).order_by(Category.id))
+    return [{**category.to_dict(), 'task_count': counts.get(category.id, 0)} for category in categories]
 
 
-def create(fields):
+def create_category(fields):
     category = Category(**fields)
     db.session.add(category)
-    commit()
+    commit('Erro ao criar categoria')
+    logger.info('Categoria criada: id=%s', category.id)
     return category
 
 
-def update(category, fields):
+def update_category(category, fields):
     for name, value in fields.items():
         setattr(category, name, value)
-    commit()
+    commit('Erro ao atualizar')
     return category
 
 
-def delete(category):
-    """As tasks da categoria ficam sem categoria (category_id = NULL), como antes."""
+def delete_category(category):
+    """As tasks da categoria ficam sem categoria (o ORM anula `category_id` na mesma transação)."""
+    category_id = category.id
     db.session.delete(category)
-    commit()
+    commit('Erro ao deletar')
+    logger.info('Categoria deletada: id=%s', category_id)

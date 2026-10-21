@@ -1,4 +1,4 @@
-"""Exceções de aplicação convertidas em JSON pelo error handler central."""
+"""Exceções de aplicação. O error handler central converte cada uma em `{"error": ...}`."""
 
 
 class AppError(Exception):
@@ -15,11 +15,12 @@ class ValidationError(AppError):
     status = 400
 
 
+class UnauthorizedError(AppError):
+    status = 401
+
+
 class ForbiddenError(AppError):
     status = 403
-
-    def __init__(self, message='Acesso negado'):
-        super().__init__(message)
 
 
 class NotFoundError(AppError):

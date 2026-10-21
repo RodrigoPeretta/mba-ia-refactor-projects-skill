@@ -1,26 +1,24 @@
 from flask import jsonify, request
 
-from controllers.validators import validate_category
+from controllers import validators
 from services import category_service
 
 
 def list_categories():
-    return jsonify(category_service.list_with_task_count()), 200
+    return jsonify(category_service.list_categories()), 200
 
 
 def create_category():
-    fields = validate_category(request.get_json(silent=True))
-    category = category_service.create(fields)
-    return jsonify(category.to_dict()), 201
+    fields = validators.validate_category_create(request.get_json(silent=True))
+    return jsonify(category_service.create_category(fields).to_dict()), 201
 
 
 def update_category(cat_id):
-    category = category_service.get_or_404(cat_id)
-    fields = validate_category(request.get_json(silent=True), partial=True)
-    category = category_service.update(category, fields)
-    return jsonify(category.to_dict()), 200
+    category = category_service.get_category(cat_id)
+    fields = validators.validate_category_update(request.get_json(silent=True))
+    return jsonify(category_service.update_category(category, fields).to_dict()), 200
 
 
 def delete_category(cat_id):
-    category_service.delete(category_service.get_or_404(cat_id))
+    category_service.delete_category(category_service.get_category(cat_id))
     return jsonify({'message': 'Categoria deletada'}), 200
