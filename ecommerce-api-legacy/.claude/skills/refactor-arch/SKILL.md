@@ -124,9 +124,10 @@ Só entre aqui após uma confirmação afirmativa.
    iniciou — inclusive processos filhos de auto-reload — e confirme as portas livres.
    Remova bancos e arquivos temporários gerados pela validação e restaure o backup do banco,
    se houver.
-9. **Resumo final**: imprima o bloco "Fase 3" do template com a nova estrutura (árvore),
+9. **Resumo final**: monte o bloco "Fase 3" do template com a nova estrutura (árvore),
    validação item a item, o mapa recomendação → aplicação → passo de validação (CRITICAL e
    HIGH), mudanças de contrato, dependências adicionadas (com justificativa) e pendências.
+   Grave-o em `.refactor-arch/phase3-summary.md` e imprima o mesmo conteúdo no terminal.
 
 ## Antes de encerrar, confira
 
@@ -138,3 +139,4 @@ Só entre aqui após uma confirmação afirmativa.
 - [ ] (Fase 3) Cada cláusula das recomendações CRITICAL/HIGH foi aplicada e provada por um passo da validação, ou está em `Pending` com o motivo.
 - [ ] (Fase 3) Se há login, nenhuma rota de escrita protegida aceita cliente anônimo nem token de outro usuário.
 - [ ] (Fase 3) Nenhum processo iniciado por você continua rodando.
+- [ ] (Fase 3) O resumo final está gravado em `.refactor-arch/phase3-summary.md`.

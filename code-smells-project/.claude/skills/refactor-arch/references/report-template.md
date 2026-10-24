@@ -99,7 +99,8 @@ Regras do relatório:
 
 ## Fase 3 — Refactoring Complete
 
-Impresso no terminal:
+Gravado em `.refactor-arch/phase3-summary.md` (é a evidência da execução) e impresso no
+terminal com o mesmo conteúdo:
 
 ````text
 ================================

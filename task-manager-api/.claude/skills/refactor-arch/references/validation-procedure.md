@@ -10,6 +10,7 @@ Artefatos (todos em `.refactor-arch/`):
 - `validation-after.md` — resultado na refatorada + comparação
 - `requests/` — corpos JSON usados nas requisições
 - `server-before.log`, `server-after.log` — saída do servidor
+- `phase3-summary.md` — resumo final da Fase 3 (gravado pelo SKILL.md, passo 9)
 
 ---
 
