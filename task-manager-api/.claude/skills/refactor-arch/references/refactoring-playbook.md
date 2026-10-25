@@ -677,10 +677,19 @@ o login do projeto emite token, aplique os três passos juntos (a Fase 3 não cr
    caso contrário → **403**. Admin = `X-Admin-Token` válido (RF-05) **ou** usuário
    autenticado com o papel administrativo do projeto. Recurso sem dono → só admin.
    Campos privilegiados (papel, ativo) continuam exigindo admin mesmo para o dono.
+4. **Campo de dono vindo do corpo** (`user_id`, `owner_id`, `author_id`…): na **criação**
+   e na **alteração**, apontar o recurso para outro usuário também é escrever num recurso
+   dele. Só o próprio usuário (valor igual ao id autenticado) ou um admin pode definir esse
+   campo; outro valor → **403**. Campo ausente na criação → use o id autenticado ou o
+   default original do projeto, sem mudar o contrato. Confira o dono **atual** (antes da
+   alteração) **e** o dono **novo** (o valor enviado).
+5. **401 × 403**, em toda checagem (rota, campo privilegiado, campo de dono): sem
+   credencial válida → **401**; autenticado, mas sem permissão → **403**. Isso vale também
+   para o cadastro público que recebe papel privilegiado: anônimo → 401, usuário comum → 403.
 
 Aplique em **todas** as rotas que a recomendação do relatório mandar proteger (tipicamente:
-alterar/excluir usuário, excluir recursos de usuário). Leitura e cadastro público continuam
-abertos, salvo indicação do relatório.
+criar, alterar e excluir recursos de usuário; alterar e excluir usuário). Leitura e cadastro
+público continuam abertos, salvo indicação do relatório.
 
 ```python
 # antes — token emitido, nenhuma rota o valida
@@ -742,8 +751,31 @@ def update_account(account_id):
         ensure_admin()
     return jsonify(account_service.update(account, fields).to_dict()), 200
 
+def ensure_can_assign(owner_id):
+    """Campo de dono vindo do corpo: só o próprio usuário ou admin."""
+    if owner_id is None:
+        return
+    ensure_owner_or_admin(owner_id)
+
+# recurso com dono (ex.: faturas com `account_id`)
+def create_invoice():
+    fields = validate_invoice(request.get_json(silent=True))
+    ensure_can_assign(fields.get("account_id"))          # criar em nome de outro → 403
+    return jsonify(invoice_service.create(fields).to_dict()), 201
+
+def update_invoice(invoice_id):
+    invoice = invoice_service.get_or_404(invoice_id)
+    ensure_owner_or_admin(invoice.account_id)            # dono atual
+    fields = validate_invoice(request.get_json(silent=True), partial=True)
+    if "account_id" in fields:
+        ensure_can_assign(fields["account_id"])          # dono novo
+    return jsonify(invoice_service.update(invoice, fields).to_dict()), 200
+
 # routes
 bp.add_url_rule("/accounts/<int:account_id>", view_func=require_auth(c.update_account),
+                methods=["PUT"])
+bp.add_url_rule("/invoices", view_func=require_auth(c.create_invoice), methods=["POST"])
+bp.add_url_rule("/invoices/<int:invoice_id>", view_func=require_auth(c.update_invoice),
                 methods=["PUT"])
 ```
 
@@ -786,3 +818,6 @@ Use o envelope de erro e o nome do papel administrativo **do próprio projeto**.
 **Verificar** (validation-procedure, Etapa 8): para cada rota protegida por sessão — sem
 token → 401; token adulterado → 401; token de **outro** usuário → 403; token do dono →
 comportamento original; admin → comportamento original. Token de usuário desativado → 401.
+Criar o recurso com o campo de dono de **outro** usuário → 403; alterar o próprio recurso
+mudando o dono para outro usuário → 403; admin fazendo as duas coisas → comportamento
+original.

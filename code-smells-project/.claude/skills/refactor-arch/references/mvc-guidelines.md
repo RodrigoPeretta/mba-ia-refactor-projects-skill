@@ -127,8 +127,9 @@ Corrija **sempre**:
   vindo do corpo, a menos que a requisição traga o token de admin.
 - **Token de login sem validação** → se o login do projeto **já emite token**, o token de
   sessão é assinado e **validado** nas rotas que o relatório mandar proteger, com
-  autorização dono-ou-admin (RF-16). Emitir um token que nenhuma rota valida não conta
-  como correção.
+  autorização dono-ou-admin (RF-16), inclusive para o campo de dono enviado no corpo
+  (criar ou transferir um registro para outro usuário exige admin). Emitir um token que
+  nenhuma rota valida não conta como correção.
 
 A recomendação de cada finding CRITICAL/HIGH é aplicada **por inteiro**: se ela pede para
 proteger um conjunto de rotas, todas as rotas do conjunto ficam protegidas. O que não for

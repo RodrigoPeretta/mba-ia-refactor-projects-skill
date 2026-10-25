@@ -120,6 +120,10 @@ de A, rode:
 | admin (`X-Admin-Token` ou token de usuário admin) | comportamento original |
 
 Inclua também a tentativa do **dono** de alterar campo privilegiado (papel/ativo) → 403.
+Para cada recurso com campo de dono no corpo, inclua: `token_B` **criando** o recurso com o
+dono = A → 403; `token_A` **alterando** o próprio recurso para dono = B → 403; admin fazendo
+o mesmo → comportamento original. Para campo privilegiado no cadastro público: anônimo →
+401; `token_B` (não admin) → 403.
 As variantes de ataque vêm antes da variante que altera ou exclui o recurso, para que ele
 ainda exista. Registre cada variante como um passo próprio.
 

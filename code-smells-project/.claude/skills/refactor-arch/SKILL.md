@@ -137,6 +137,6 @@ Só entre aqui após uma confirmação afirmativa.
 - [ ] (Fase 3) Config sem segredos literais; models, views/rotas, controllers e error handler centralizado separados; entry point claro.
 - [ ] (Fase 3) A aplicação sobe com o comando original e não há REGRESSION em `validation-after.md`.
 - [ ] (Fase 3) Cada cláusula das recomendações CRITICAL/HIGH foi aplicada e provada por um passo da validação, ou está em `Pending` com o motivo.
-- [ ] (Fase 3) Se há login, nenhuma rota de escrita protegida aceita cliente anônimo nem token de outro usuário.
+- [ ] (Fase 3) Se há login, nenhuma rota de escrita protegida aceita cliente anônimo, token de outro usuário ou campo de dono (`user_id`…) apontando para outro usuário.
 - [ ] (Fase 3) Nenhum processo iniciado por você continua rodando.
 - [ ] (Fase 3) O resumo final está gravado em `.refactor-arch/phase3-summary.md`.

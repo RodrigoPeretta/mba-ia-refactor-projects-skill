@@ -126,7 +126,12 @@ Nunca desça um CRITICAL de segurança (AP-01 a AP-04, AP-06) abaixo de HIGH.
   Fase 3 precisa preservar. **Se o login do projeto emite token**, a recomendação também nomeia as
   rotas de escrita sobre usuários e sobre recursos com dono e diz: "validar o token de
   sessão assinado (401 sem token válido) e permitir só ao dono ou a um admin (403)"
-  (RF-16), além de RF-05 para as rotas administrativas.
+  (RF-16), além de RF-05 para as rotas administrativas. Para cada recurso com campo de
+  dono no corpo (`user_id`, `owner_id`…), a recomendação também diz: "na criação e na
+  alteração, só o próprio usuário ou um admin define o dono (403)". Em campos e rotas
+  privilegiados, anônimo → 401 e autenticado sem permissão → 403.
+- **Sinal adicional:** criação ou alteração que aceita o campo de dono do corpo sem
+  compará-lo com o usuário autenticado (um usuário cria ou transfere registros para outro).
 - **Fix:** RF-05; RF-16 quando o login emite token
 
 ---
