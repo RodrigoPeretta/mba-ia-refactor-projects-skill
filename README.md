@@ -10,9 +10,10 @@ em 3 fases sobre qualquer projeto backend:
 3. **Refatoração**: reestrutura para MVC e **prova que a aplicação continua funcionando**,
    subindo a versão original e a refatorada e comparando as respostas de todos os endpoints.
 
-A mesma pasta da skill, idêntica byte a byte, foi executada nos 3 projetos legados: dois em
-Python/Flask e um em Node.js/Express. O P1 e o P2 rodaram com a v1.1, e o P3 com a v1.2.2
-(ver a revisão abaixo). Os critérios de aceite foram atingidos nos 3.
+A skill foi aplicada a 3 projetos legados: dois em Python/Flask e um em Node.js/Express.
+Hoje os 3 projetos têm a mesma cópia da skill (v1.2.2), idêntica byte a byte. A refatoração
+do P1 e do P2 foi feita com a v1.1 e a do P3 com a v1.2.2 (ver a revisão abaixo). Os
+critérios de aceite foram atingidos nos 3.
 
 | | Projeto 1 · code-smells-project | Projeto 2 · ecommerce-api-legacy | Projeto 3 · task-manager-api |
 |---|---|---|---|
@@ -276,6 +277,10 @@ a afirmar, sem testar, que a categoria deixa órfãos (item "Observado fora do r
 `Pending` em `phase3-summary.md`). Essa afirmação está **errada** e foi mantida no arquivo só porque é
 um artefato gerado pela skill.
 
+Com isso, o único achado manual que o relatório da v1.2.2 **não** detectou é a parte válida
+do P3-11 (o loop manual), por isso o 13/14. Mesmo sem o finding, a refatoração corrigiu esse
+trecho.
+
 ### Estrutura antes × depois
 
 <table>
@@ -436,10 +441,8 @@ rodou contra o código de cada execução da skill:
 | Token de usuário desativado | **200** | 401 | 401 | 401 |
 | **Total** | **8/24** | **24/24** | **21/24** | **24/24** |
 
-Também verifiquei por fora a exclusão de categoria (ver a correção do P3-11 acima): o
-`category_id` das tasks vira `NULL` no original e no refatorado.
-
-Também conferi por fora da skill: `senha`/`password`/`secret_key` não aparecem mais em
+Também conferi por fora da skill: no P3, apagar uma categoria grava `NULL` no
+`category_id` das tasks, no original e no refatorado (ver a correção do P3-11); `senha`/`password`/`secret_key` não aparecem mais em
 nenhuma resposta; `DROP TABLE` em `/admin/query` é recusado mesmo com token; o login com as
 senhas do seed funciona (agora com hash `scrypt`); o número do cartão não aparece mais no
 log; não ficou nenhum servidor rodando.
