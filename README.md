@@ -11,7 +11,7 @@ em 3 fases sobre qualquer projeto backend:
    subindo a versão original e a refatorada e comparando as respostas de todos os endpoints.
 
 A mesma pasta da skill, idêntica byte a byte, foi executada nos 3 projetos legados: dois em
-Python/Flask e um em Node.js/Express. O P1 e o P2 rodaram com a v1.1, e o P3 com a v1.2
+Python/Flask e um em Node.js/Express. O P1 e o P2 rodaram com a v1.1, e o P3 com a v1.2.2
 (ver a revisão abaixo). Os critérios de aceite foram atingidos nos 3.
 
 | | Projeto 1 · code-smells-project | Projeto 2 · ecommerce-api-legacy | Projeto 3 · task-manager-api |
@@ -19,16 +19,18 @@ Python/Flask e um em Node.js/Express. O P1 e o P2 rodaram com a v1.1, e o P3 com
 | Stack | Python + Flask 3.1.1 | Node.js + Express ^4.18.2 | Python + Flask 3.0.0 + SQLAlchemy |
 | Ponto de partida | Monolito (4 arquivos) | God Class (3 arquivos) | Parcialmente em camadas (15 arquivos) |
 | Findings (C / H / M / L) | 21 (7 / 5 / 6 / 3) | 18 (5 / 5 / 4 / 4) | 19 (5 / 2 / 9 / 3) |
-| Validação em execução | 40 passos, 0 regressões | 12 passos, 0 regressões | 73 passos (23 de autenticação), 0 regressões |
+| Validação em execução | 40 passos, 0 regressões | 12 passos, 0 regressões | 80 passos (com variantes de autenticação), 0 regressões |
 | Relatório | [audit-project-1.md](reports/audit-project-1.md) | [audit-project-2.md](reports/audit-project-2.md) | [audit-project-3.md](reports/audit-project-3.md) |
 
-> **Revisão após a correção (skill v1.2).** O feedback apontou que, no P3, o login emitia um
-> token assinado que nenhuma rota validava, e por isso `PUT /users/<id>` continuava aberto
-> a clientes anônimos. A skill ganhou o padrão **RF-16** (validar o token de sessão e
-> autorizar dono ou admin), e a Fase 3 passou a aplicar cada cláusula da recomendação. O P3
-> foi refatorado de novo a partir do código original. Detalhes em
+> **Revisão após a correção (skill v1.2.2).** O feedback apontou que, no P3, o login emitia
+> um token assinado que nenhuma rota validava, e por isso `PUT /users/<id>` continuava aberto
+> a clientes anônimos. A skill ganhou o padrão **RF-16**: validar o token de sessão e
+> autorizar só o dono ou um admin, inclusive quando o corpo traz o campo de dono
+> (`user_id`). A Fase 3 passou a aplicar cada cláusula da recomendação e a gravar o resumo
+> em arquivo. O P3 foi refatorado de novo a partir do código original. Uma das execuções
+> intermediárias falhou no teste de ataque e foi descartada. Detalhes em
 > [Histórico das iterações](#desafios-encontrados-e-como-resolvi) e no
-> [teste de ataque](docs/iterations/p3-v1.2-teste-de-ataque.md) (v1.1: 8/24 → v1.2: 24/24).
+> [teste de ataque](docs/iterations/p3-v1.2-teste-de-ataque.md) (v1.1: 8/24 → v1.2.2: 24/24).
 
 O projeto foi desenvolvido com **SDD (Spec-Driven Development)** via
 [spec-kit](https://github.com/github/spec-kit). A constitution, a spec, o plan, a research e
@@ -107,7 +109,7 @@ documento completo, com todas as linhas e a evidência de cada achado, está em
 | P3-08 | MEDIUM | **APIs deprecated**: `Query.get()` (SQLAlchemy 2.x) e `datetime.utcnow()` (Python 3.12+) | 16 e 23 ocorrências | **Confirmado** por `LegacyAPIWarning` e `DeprecationWarning` em execução |
 | P3-09 | MEDIUM | `except:` genérico e tipos não validados | `task_routes.py:62, 113, …` | Erro do cliente vira 500 |
 | P3-10 | MEDIUM | CRUD de categorias dentro de `report_routes.py` | `report_routes.py:157-223` | Coesão errada (viola o SRP) |
-| P3-11 | MEDIUM | Integridade referencial manual ou ausente | `user_routes.py:140-142`; `report_routes.py:218` | Apagar uma categoria deixa tasks apontando para um id inexistente |
+| P3-11 | MEDIUM | Integridade referencial manual ou ausente | `user_routes.py:140-142`; `report_routes.py:218` | Apagar um usuário remove as tasks num loop manual. A parte da categoria órfã estava errada ([correção](#resumo-dos-relatórios-de-auditoria)) |
 | P3-12 | LOW | Imports e dependências não usados | `app.py:7`; `requirements.txt:4-6` | Ruído e dependências desnecessárias |
 | P3-13 | LOW | Magic numbers e strings repetidas, com as constantes existindo sem uso | `helpers.py:110-116` | Legibilidade |
 | P3-14 | LOW | Código verboso (`if x: return True else: return False`) | `models/user.py:34-38` | Legibilidade |
@@ -222,6 +224,7 @@ sessão com autorização dono-ou-admin.
 | **Caminho real do SQLite** | Flask-SQLAlchemy resolve `sqlite:///tasks.db` para `instance/tasks.db` | O procedimento manda confirmar o arquivo realmente criado antes de resetar o banco entre as medições |
 | **Dados que mudam entre execuções** | Ids, timestamps e hashes diferentes a cada rodada | A comparação usa status + "forma" (tipo e chaves) e ignora valores voláteis |
 | **Token emitido e nunca validado** (feedback da correção) | No P3, o relatório recomendava "exigir token válido nas rotas de escrita sobre usuários", mas a Fase 3 só passou a **emitir** um token assinado no login. Nenhuma rota o validava, e `PUT /users/<id>` seguia aceitando que um anônimo trocasse o e-mail e a senha de outro usuário. A causa estava na própria skill: as guidelines colocavam "autenticação de usuários" fora do escopo da Fase 3, contradizendo a recomendação da Fase 2. E a validação nunca testava "usuário A altera B" | v1.2: RF-16 no playbook; escopo corrigido (validar o token que o login já emite é obrigatório); recomendação quebrada em cláusulas e provada por passo de validação; a validação roda 5 variantes por rota protegida (sem token, token adulterado, token de outro usuário, dono, admin) |
+| **Resultado diferente entre execuções** | Com a mesma skill (v1.2/v1.2.1), uma execução do P3 checou o `user_id` vindo do corpo e a outra não: na segunda, um usuário criava e transferia tasks para outro. A validação da própria skill deu 0 regressões nas duas, porque o roteiro não tinha esse caso | v1.2.2: o RF-16 cita explicitamente o campo de dono e a distinção 401 × 403, a recomendação padrão do AP-06 também, e a validação ganhou as variantes "criar em nome de outro" e "transferir para outro". O teste de ataque independente roda a cada execução |
 | **Destino do relatório** | A skill não tem como saber de forma agnóstica se o projeto é o "N" | Ela grava em `.refactor-arch/audit-report.md`, e a cópia para `reports/` é um passo de entrega. Também aceita um argumento opcional com o caminho |
 
 Histórico das iterações:
@@ -232,13 +235,15 @@ Histórico das iterações:
 | v1.1 | P1 completo | Monolítica ✓, recomendação correta ✓, 0 regressões | nenhuma |
 | v1.1 | P2 completo | Sem nenhuma mudança na skill, 0 regressões | nenhuma |
 | v1.1 | P3 completo | Sem nenhuma mudança na skill, 0 regressões, **mas** a recomendação do AP-06 foi aplicada pela metade (token emitido e não validado), o que só apareceu na correção | v1.2: RF-16, escopo de auth, recomendação por cláusula, variantes de ataque na validação |
-| v1.2 | P3 completo, a partir do código original | 19 findings; o AP-06 agora nomeia cada rota e a regra 401/403; 73 passos (23 de autenticação), 0 regressões; teste de ataque independente **24/24** (v1.1: 8/24) | nenhuma |
+| v1.2 | P3 completo, a partir do código original | 19 findings; o AP-06 agora nomeia cada rota e a regra 401/403; 73 passos, 0 regressões; teste de ataque **24/24** (v1.1: 8/24). Mas o resumo da Fase 3 só foi impresso no terminal e se perdeu | v1.2.1: gravar o resumo em `.refactor-arch/phase3-summary.md` |
+| v1.2.1 | P3 completo, a partir do código original | 20 findings, 76 passos, 0 regressões, resumo gravado. **Teste de ataque 21/24**: um usuário criava tasks em nome de outro e transferia as próprias tasks (`user_id` no corpo). A recomendação não cobria o campo de dono, e a v1.2 só tinha acertado por acaso. Execução **descartada** ([resumo](docs/iterations/p3-v1.2.1-phase3-summary.md)) | v1.2.2: campo de dono e 401 × 403 explícitos no RF-16, no AP-06 e na validação |
+| v1.2.2 | P3 completo, a partir do código original | 19 findings; recomendação do AP-06 cita o `user_id`; 80 passos, 0 regressões; teste de ataque **24/24**; [`phase3-summary.md`](task-manager-api/.refactor-arch/phase3-summary.md) com o mapa recomendação → código → passo de validação | nenhuma (entregue) |
 
 A v1.2 só acrescenta regras que disparam quando o login **emite token**. O P1 (login sem
 token) e o P2 (sem login) não têm esse caso, então as refatorações deles, feitas com a v1.1,
 continuam válidas e não foram refeitas.
 
-O relatório da iteração 1 e o teste de ataque da v1.2 estão em
+O relatório da iteração 1, o resumo da execução descartada e o teste de ataque estão em
 [`docs/iterations/`](docs/iterations/).
 
 ---
@@ -260,8 +265,16 @@ A skill também encontrou problemas que **eu não tinha visto** na análise manu
   original (`cc.startsWith is not a function`).
 - **P3:** a busca com `priority=abc` respondia 500.
 
-O único achado manual que a skill **não** detectou foi o P3-11: apagar uma categoria deixa
-tasks com `category_id` órfão.
+**Correção da análise manual (P3-11).** Eu tinha anotado que apagar uma categoria deixava
+tasks com `category_id` órfão. A execução v1.2.1 da skill mostrou que não: o
+`relationship` com backref faz o SQLAlchemy gravar `category_id = NULL` nas tasks antes de
+apagar a categoria. Confirmei isso por fora, no código original e no refatorado, e o
+resultado foi `NULL` nos dois casos. A parte válida do P3-11 é a exclusão das tasks de um
+usuário num loop manual, que a refatoração trocou por um único `DELETE` em lote na mesma
+transação da exclusão do usuário (`services/user_service.py`). Já a execução v1.2.2 voltou
+a afirmar, sem testar, que a categoria deixa órfãos (item "Observado fora do relatório" do
+`Pending` em `phase3-summary.md`). Essa afirmação está **errada** e foi mantida no arquivo só porque é
+um artefato gerado pela skill.
 
 ### Estrutura antes × depois
 
@@ -340,8 +353,8 @@ config/        # NOVO: settings (env + constantes)
 models/        # mantido: + regras de domínio, serialização segura
 routes/        # mantido: só mapeamento; + category_routes, system_routes
 controllers/   # NOVO: task, user, report, category, system + validators
-services/      # mantido + task, user, report, category, auth (token de sessão)
-middlewares/   # NOVO: error_handler, auth (Bearer + dono-ou-admin, X-Admin-Token)
+services/      # mantido + task, user, report, category, persistence
+middlewares/   # NOVO: error_handler, auth (token de sessão, dono-ou-admin, X-Admin-Token)
 utils/         # mantido: helpers usados de fato + errors
 ```
 
@@ -387,7 +400,7 @@ servidor:
 |---|---|---|
 | 1 | [`behavior-before.md`](code-smells-project/.refactor-arch/behavior-before.md) → [`validation-after.md`](code-smells-project/.refactor-arch/validation-after.md) | OK 29 · CHANGED 11 · **REGRESSION 0** |
 | 2 | [`behavior-before.md`](ecommerce-api-legacy/.refactor-arch/behavior-before.md) → [`validation-after.md`](ecommerce-api-legacy/.refactor-arch/validation-after.md) | OK 6 · CHANGED 6 · **REGRESSION 0** |
-| 3 | [`behavior-before.md`](task-manager-api/.refactor-arch/behavior-before.md) → [`validation-after.md`](task-manager-api/.refactor-arch/validation-after.md) | OK 37 · CHANGED 36 · **REGRESSION 0**, sem nenhum warning de depreciação (antes eram 25). Dos 36 CHANGED, 23 são as variantes de autenticação (401/403) |
+| 3 | [`behavior-before.md`](task-manager-api/.refactor-arch/behavior-before.md) → [`validation-after.md`](task-manager-api/.refactor-arch/validation-after.md) | OK 42 · CHANGED 38 · **REGRESSION 0** em 80 passos, sem nenhum warning de depreciação (antes eram 25). O resumo da Fase 3 está em [`phase3-summary.md`](task-manager-api/.refactor-arch/phase3-summary.md) |
 
 Trecho do log do P1 refatorado ([`server-after.log`](code-smells-project/.refactor-arch/server-after.log)):
 
@@ -409,18 +422,22 @@ existir:
 | 2 | 3 de 6 | 3 chamadas de admin sem token → **403** (com token: mesmo corpo do original) |
 | 3 (v1.1) | 19 de 23 | `priority: "alta"`: 500 → **400**; 3 DELETE sem token → **403** (com token: 200) |
 
-No P3 (v1.2), a verificação independente é um **teste de ataque** escrito depois do
-feedback. Ele rodou contra a refatoração da v1.1 e contra a da v1.2:
+No P3, a verificação independente é um **teste de ataque** escrito depois do feedback. Ele
+rodou contra o código de cada execução da skill:
 [`p3-v1.2-teste-de-ataque.md`](docs/iterations/p3-v1.2-teste-de-ataque.md).
 
-| Cenário | v1.1 | v1.2 |
-|---|:-:|:-:|
-| Anônimo troca e-mail e senha da Maria (`PUT /users/2`) | **200** | 401 |
-| Token legado, forjado ou adulterado | **200** | 401 |
-| Usuário altera outro usuário, ou a task de outro | **200** | 403 |
-| Dono altera o próprio cadastro; admin altera qualquer um | 200 | 200 |
-| Token de usuário desativado | **200** | 401 |
-| **Total** | **8/24** | **24/24** |
+| Cenário | v1.1 | v1.2 | v1.2.1 | v1.2.2 |
+|---|:-:|:-:|:-:|:-:|
+| Anônimo troca e-mail e senha da Maria (`PUT /users/2`) | **200** | 401 | 401 | 401 |
+| Token legado, forjado ou adulterado | **200** | 401 | 401 | 401 |
+| Usuário altera outro usuário, ou a task de outro | **200** | 403 | 403 | 403 |
+| Usuário cria ou transfere task para outro (`user_id`) | **200/201** | 403 | **200/201** | 403 |
+| Dono altera o próprio cadastro; admin altera qualquer um | 200 | 200 | 200 | 200 |
+| Token de usuário desativado | **200** | 401 | 401 | 401 |
+| **Total** | **8/24** | **24/24** | **21/24** | **24/24** |
+
+Também verifiquei por fora a exclusão de categoria (ver a correção do P3-11 acima): o
+`category_id` das tasks vira `NULL` no original e no refatorado.
 
 Também conferi por fora da skill: `senha`/`password`/`secret_key` não aparecem mais em
 nenhuma resposta; `DROP TABLE` em `/admin/query` é recusado mesmo com token; o login com as
@@ -458,18 +475,22 @@ cadastro público (`POST /users` com papel padrão) seguem abertos, como no orig
 - **Flask em camadas (P3):** foi o teste de adaptação. A skill **não recriou** o projeto:
   manteve `models/`, `routes/`, `services/` e `utils/`, criou só `config/`, `controllers/`
   e `middlewares/`, passou a usar os métodos de model que já existiam e eram ignorados, e
-  separou o CRUD de categorias. Na v1.2, ela reaproveitou o login existente: o token passou
-  a ser validado (`services/auth_service.py` + `middlewares/auth.py`) e a autorização é
-  dono-ou-admin.
+  separou o CRUD de categorias. Desde a v1.2, ela reaproveita o login existente: o token
+  passa a ser validado (`middlewares/auth.py`) e a autorização é dono-ou-admin, inclusive
+  para o `user_id` das tasks.
 - **Limitações observadas:**
-  - O P3-11 (categoria órfã) passou despercebido nas duas versões.
+  - **O resultado varia entre execuções.** Com a mesma skill, a v1.2 cobriu o `user_id` e a
+    v1.2.1 não. Só o teste de ataque, rodado por fora, pegou a diferença. Por isso a regra
+    virou texto explícito na v1.2.2, e o teste independente continua necessário a cada
+    execução.
   - Na v1.1, a recomendação de autenticação do P3 foi aplicada pela metade e o roteiro de
-    validação não pegou a falha. Ela só apareceu na correção e foi resolvida na v1.2.
+    validação não pegou a falha. Ela só apareceu na correção.
+  - A skill às vezes afirma, sem testar, comportamentos que a execução desmente (P3-11: a
+    v1.2.1 testou e acertou; a v1.2.2 afirmou sem testar e errou).
   - Hashes MD5 já gravados: a execução da v1.1 regravava o hash no primeiro login. A da
-    v1.2 seguiu a alternativa "re-hash pelo seed" da própria recomendação, então um banco
-    antigo com MD5 responde 401 até rodar o `seed.py` ou trocar a senha. Isso só afeta
-    bancos criados antes da refatoração, e as guidelines tratam migração de dados já
-    gravados como fora do escopo.
+    v1.2.2 não regrava, então um banco antigo com MD5 responde 401 até rodar o `seed.py` ou
+    trocar a senha. Isso está listado em `Pending`, só afeta bancos criados antes da
+    refatoração, e as guidelines tratam migração de dados já gravados como fora do escopo.
   - Refresh e revogação de token e rate limiting ficaram fora do escopo.
 
 ---
@@ -578,7 +599,7 @@ mba-ia-refactor-projects-skill/
 │   └── audit-project-3.md
 ├── docs/
 │   ├── analise-manual.md           # análise manual completa
-│   └── iterations/                 # iteração 1 (P1) e teste de ataque do P3 (v1.1 × v1.2)
+│   └── iterations/                 # iteração 1 (P1), execução descartada e teste de ataque do P3
 ├── specs/001-refactor-arch-skill/  # SDD: spec, plan, research, data-model, contracts, tasks
 └── .specify/, .claude/skills/speckit-*   # spec-kit
 ```

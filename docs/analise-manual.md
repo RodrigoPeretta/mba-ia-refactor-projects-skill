@@ -317,6 +317,10 @@ models para evitar isso não é usado.
   um registro inexistente)
 - **Por que importa:** a regra de integridade fica fora do model e é inconsistente entre
   entidades.
+- **Correção (posterior):** a parte da categoria estava errada. O `relationship` com
+  backref (`models/task.py:21`) faz o SQLAlchemy gravar `category_id = NULL` nas tasks
+  antes de apagar a categoria, e isso foi confirmado em execução no código original. Só a
+  parte do loop manual em `user_routes.py:140-142` procede.
 
 ### [LOW] P3-12 — Imports e dependências não usados
 - **Onde:** `app.py:7` (`os, sys, json`), `task_routes.py:7` (`json, os, sys, time`),
